@@ -1,307 +1,347 @@
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
 
 public class FacultyInterface extends JFrame {
-    private static final long serialVersionUID = 1L;
-    private String facultyId;
-    private String facultyName;
-    private JPanel mainPanel;
-    private CardLayout cardLayout;
-    private List<Schedule> schedules;
-    private double ratePerHour;
-    private int totalHours;
+    private DatabaseManager dbManager;
+    private User facultyUser;
+    private JTabbedPane tabbedPane;
     
-    // Buttons for navigation
-    private JButton setScheduleButton;
-    private JButton viewScheduleButton;
-    private JButton viewSalaryButton;
-    
-    public FacultyInterface(String facultyId, String facultyName) {
-        this.facultyId = facultyId;
-        this.facultyName = facultyName;
-        this.schedules = new ArrayList<>();
-        this.ratePerHour = 10000; // Default rate per hour
+    public FacultyInterface(DatabaseManager dbManager, User facultyUser) {
+        this.dbManager = dbManager;
+        this.facultyUser = facultyUser;
         
-        // Initialize the frame
-        setTitle("School System");
-        setSize(600, 450);
+        setTitle("Faculty Interface - " + facultyUser.getUserInfo("name"));
+        setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
-        // Create the layout
-        setupLayout();
+        // Create tabbed pane
+        tabbedPane = new JTabbedPane();
         
-        // Add initial schedule data (for demonstration)
-        addSampleSchedules();
+        // Add tabs for each functionality
+        tabbedPane.addTab("Subject Assignment", createSubjectAssignmentPanel());
+        tabbedPane.addTab("Course Load", createCourseLoadPanel());
+        tabbedPane.addTab("Salary Information", createSalaryPanel());
         
-        // Calculate total hours
-        calculateTotalHours();
-    }
-    
-    private void setupLayout() {
-        // Set up the main layout
-        setLayout(new BorderLayout());
-        
-        // Create header panel
-        JPanel headerPanel = new JPanel(new GridLayout(2, 1));
-        headerPanel.setBackground(Color.WHITE);
-        headerPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        
-        JLabel titleLabel = new JLabel("School System", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        
-        JPanel facultyInfoPanel = new JPanel(new GridLayout(1, 2));
-        JLabel nameLabel = new JLabel(facultyName, SwingConstants.LEFT);
-        nameLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
-        JLabel idLabel = new JLabel(facultyId, SwingConstants.RIGHT);
-        idLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
-        
-        facultyInfoPanel.add(nameLabel);
-        facultyInfoPanel.add(idLabel);
-        
-        headerPanel.add(titleLabel);
-        headerPanel.add(facultyInfoPanel);
-        
-        // Add the header panel to the frame
-        add(headerPanel, BorderLayout.NORTH);
-        
-        // Create left panel for navigation buttons
-        JPanel leftPanel = new JPanel();
-        leftPanel.setLayout(new GridLayout(5, 1, 10, 10));
-        leftPanel.setBackground(Color.WHITE);
-        leftPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        
-        setScheduleButton = createButton("Set Schedule", Color.decode("#4CAF50"));
-        viewScheduleButton = createButton("View Schedule", Color.decode("#4CAF50"));
-        viewSalaryButton = createButton("View Salary", Color.decode("#4CAF50"));
-        
-        leftPanel.add(setScheduleButton);
-        leftPanel.add(viewScheduleButton);
-        leftPanel.add(viewSalaryButton);
-        leftPanel.add(new JLabel()); // Empty space
-        leftPanel.add(new JLabel()); // Empty space
-        
-        add(leftPanel, BorderLayout.WEST);
-        
-        // Create main content panel with CardLayout
-        cardLayout = new CardLayout();
-        mainPanel = new JPanel(cardLayout);
-        
-        // Create and add the different panels
-        mainPanel.add(createSetSchedulePanel(), "setSchedule");
-        mainPanel.add(createViewSchedulePanel(), "viewSchedule");
-        mainPanel.add(createViewSalaryPanel(), "viewSalary");
-        
-        add(mainPanel, BorderLayout.CENTER);
-        
-        // Add action listeners to buttons
-        setScheduleButton.addActionListener(e -> cardLayout.show(mainPanel, "setSchedule"));
-        viewScheduleButton.addActionListener(e -> cardLayout.show(mainPanel, "viewSchedule"));
-        viewSalaryButton.addActionListener(e -> cardLayout.show(mainPanel, "viewSalary"));
-    }
-    
-    private JButton createButton(String text, Color backgroundColor) {
-        JButton button = new JButton(text);
-        button.setBackground(backgroundColor);
-        button.setForeground(Color.WHITE);
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setFont(new Font("Arial", Font.BOLD, 14));
-        return button;
-    }
-    
-    private JPanel createSetSchedulePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        
-        JPanel formPanel = new JPanel(new GridLayout(5, 2, 10, 10));
-        
-        JLabel dayLabel = new JLabel("Day:");
-        JComboBox<String> dayComboBox = new JComboBox<>(new String[]{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"});
-        
-        JLabel startTimeLabel = new JLabel("Start Time:");
-        JTextField startTimeField = new JTextField();
-        
-        JLabel endTimeLabel = new JLabel("End Time:");
-        JTextField endTimeField = new JTextField();
-        
-        JLabel roomLabel = new JLabel("Room Number:");
-        JTextField roomField = new JTextField();
-        
-        formPanel.add(dayLabel);
-        formPanel.add(dayComboBox);
-        formPanel.add(startTimeLabel);
-        formPanel.add(startTimeField);
-        formPanel.add(endTimeLabel);
-        formPanel.add(endTimeField);
-        formPanel.add(roomLabel);
-        formPanel.add(roomField);
-        
-        JButton saveButton = new JButton("Save Schedule");
-        saveButton.setBackground(Color.decode("#4CAF50"));
-        saveButton.setForeground(Color.WHITE);
-        
-        saveButton.addActionListener(e -> {
-            String day = (String) dayComboBox.getSelectedItem();
-            String startTime = startTimeField.getText();
-            String endTime = endTimeField.getText();
-            String room = roomField.getText();
-            
-            if (startTime.isEmpty() || endTime.isEmpty() || room.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please fill in all fields", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
+        // Add logout button at bottom
+        JButton logoutButton = new JButton("Logout");
+        logoutButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dispose();
+                new LoginPage(dbManager);
             }
-            
-            // Create schedule in format "startTime - endTime DAY" and room number
-            String timeString = startTime + " - " + endTime + " " + getDayCode(day);
-            Schedule newSchedule = new Schedule(room, timeString);
-            schedules.add(newSchedule);
-            
-            // Refresh the view schedule panel
-            mainPanel.remove(1);
-            mainPanel.add(createViewSchedulePanel(), "viewSchedule", 1);
-            
-            // Recalculate hours
-            calculateTotalHours();
-            
-            // Refresh the salary panel
-            mainPanel.remove(2);
-            mainPanel.add(createViewSalaryPanel(), "viewSalary", 2);
-            
-            // Show success message
-            JOptionPane.showMessageDialog(this, "Schedule saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-            
-            // Clear the form
-            startTimeField.setText("");
-            endTimeField.setText("");
-            roomField.setText("");
         });
         
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.add(saveButton);
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.add(tabbedPane, BorderLayout.CENTER);
         
-        panel.add(formPanel, BorderLayout.CENTER);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        bottomPanel.add(logoutButton);
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+        
+        add(mainPanel);
+        setVisible(true);
+    }
+    
+    // Subject Assignment Panel
+    private JPanel createSubjectAssignmentPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        
+        // Available subjects list on the left
+        JPanel leftPanel = new JPanel(new BorderLayout());
+        leftPanel.setBorder(BorderFactory.createTitledBorder("Available Subjects"));
+        
+        DefaultListModel<String> subjectListModel = new DefaultListModel<>();
+        JList<String> subjectList = new JList<>(subjectListModel);
+        JScrollPane subjectScrollPane = new JScrollPane(subjectList);
+        
+        leftPanel.add(subjectScrollPane, BorderLayout.CENTER);
+        
+        // Subject schedules on the right
+        JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.setBorder(BorderFactory.createTitledBorder("Subject Schedules"));
+        
+        DefaultListModel<String> scheduleListModel = new DefaultListModel<>();
+        JList<String> scheduleList = new JList<>(scheduleListModel);
+        JScrollPane scheduleScrollPane = new JScrollPane(scheduleList);
+        
+        JButton assignButton = new JButton("Assign Subject to Me");
+        assignButton.setEnabled(false);
+        
+        rightPanel.add(scheduleScrollPane, BorderLayout.CENTER);
+        rightPanel.add(assignButton, BorderLayout.SOUTH);
+        
+        // Create split pane
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
+        splitPane.setDividerLocation(350);
+        panel.add(splitPane, BorderLayout.CENTER);
+        
+        // Load the available subjects (those without assigned faculty)
+        refreshAvailableSubjects(subjectListModel);
+        
+        // Event listeners
+        subjectList.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (!e.getValueIsAdjusting() && subjectList.getSelectedValue() != null) {
+                    String subjectId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from list display
+                    Subject subject = dbManager.getSubject(subjectId);
+                    
+                    if (subject != null) {
+                        // Display schedules
+                        scheduleListModel.clear();
+                        for (Schedule schedule : subject.getSchedules()) {
+                            scheduleListModel.addElement(schedule.toString());
+                        }
+                        
+                        // Enable assign button if schedules exist
+                        assignButton.setEnabled(!subject.getSchedules().isEmpty());
+                    }
+                }
+            }
+        });
+        
+        assignButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (subjectList.getSelectedValue() == null) {
+                    JOptionPane.showMessageDialog(panel, "Please select a subject", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                String subjectId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from list display
+                Subject subject = dbManager.getSubject(subjectId);
+                
+                if (subject != null) {
+                    // Check if faculty already has a scheduling conflict
+                    List<Subject> assignedSubjects = dbManager.getAssignedSubjects(facultyUser.getUsername());
+                    boolean hasConflict = false;
+                    
+                    for (Schedule newSchedule : subject.getSchedules()) {
+                        for (Subject assignedSubject : assignedSubjects) {
+                            for (Schedule existingSchedule : assignedSubject.getSchedules()) {
+                                // Simple conflict check: same day and overlapping times
+                                if (existingSchedule.getDayOfWeek().equals(newSchedule.getDayOfWeek())) {
+                                    // TODO: Implement more sophisticated time overlap check if needed
+                                    hasConflict = true;
+                                    break;
+                                }
+                            }
+                            if (hasConflict) break;
+                        }
+                        if (hasConflict) break;
+                    }
+                    
+                    if (hasConflict) {
+                        JOptionPane.showMessageDialog(panel, 
+                            "This subject has a schedule that conflicts with your existing assignments.", 
+                            "Schedule Conflict", 
+                            JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                    
+                    // Assign the subject to this faculty
+                    subject.setAssignedFaculty(facultyUser.getUsername());
+                    
+                    // Refresh the available subjects list
+                    refreshAvailableSubjects(subjectListModel);
+                    scheduleListModel.clear();
+                    
+                    JOptionPane.showMessageDialog(panel, 
+                        "Subject '" + subject.getName() + "' has been assigned to you.", 
+                        "Assignment Successful", 
+                        JOptionPane.INFORMATION_MESSAGE);
+                }
+            }
+        });
         
         return panel;
     }
     
-    private JPanel createViewSchedulePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+    // Helper method to refresh available subjects
+    private void refreshAvailableSubjects(DefaultListModel<String> model) {
+        model.clear();
+        List<Subject> subjects = dbManager.getAllSubjects();
         
-        // Create table-like structure for schedules
-        JPanel tablePanel = new JPanel(new GridLayout(0, 3));
-        tablePanel.setBackground(Color.WHITE);
-        
-        // Add headers
-        JLabel scheduleHeader = new JLabel("Schedule", SwingConstants.CENTER);
-        scheduleHeader.setFont(new Font("Arial", Font.BOLD, 14));
-        
-        JLabel roomHeader = new JLabel("Room", SwingConstants.CENTER);
-        roomHeader.setFont(new Font("Arial", Font.BOLD, 14));
-        
-        JLabel hoursHeader = new JLabel("Hours", SwingConstants.CENTER);
-        hoursHeader.setFont(new Font("Arial", Font.BOLD, 14));
-        
-        tablePanel.add(scheduleHeader);
-        tablePanel.add(roomHeader);
-        tablePanel.add(hoursHeader);
-        
-        // Add schedule data
-        for (Schedule schedule : schedules) {
-            JLabel scheduleLabel = new JLabel(schedule.getTime(), SwingConstants.CENTER);
-            JLabel roomLabel = new JLabel(schedule.getRoomNumber(), SwingConstants.CENTER);
-            JLabel hoursLabel = new JLabel(String.valueOf(calculateHours(schedule.getTime())), SwingConstants.CENTER);
-            
-            tablePanel.add(scheduleLabel);
-            tablePanel.add(roomLabel);
-            tablePanel.add(hoursLabel);
+        // Filter subjects in faculty's department and those without assigned faculty
+        for (Subject subject : subjects) {
+            if (subject.getDepartment().equals(facultyUser.getUserInfo("department")) && 
+                (subject.getAssignedFaculty() == null || subject.getAssignedFaculty().isEmpty())) {
+                model.addElement(subject.getId() + " - " + subject.getName());
+            }
         }
+    }
+    
+    // Course Load Panel
+    private JPanel createCourseLoadPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
         
-        JScrollPane scrollPane = new JScrollPane(tablePanel);
+        // Create table for assigned subjects
+        String[] columnNames = {"Subject ID", "Name", "Department", "Units", "Schedule"};
+        DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Make table read-only
+            }
+        };
+        
+        JTable subjectsTable = new JTable(tableModel);
+        JScrollPane scrollPane = new JScrollPane(subjectsTable);
+        
         panel.add(scrollPane, BorderLayout.CENTER);
         
-        return panel;
-    }
-    
-    private JPanel createViewSalaryPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        // Create panel for summary information
+        JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JLabel totalSubjectsLabel = new JLabel("Total Subjects: 0");
+        JLabel totalUnitsLabel = new JLabel("Total Units: 0");
         
-        JPanel salaryPanel = new JPanel(new GridLayout(0, 3));
-        salaryPanel.setBackground(Color.WHITE);
+        summaryPanel.add(totalSubjectsLabel);
+        summaryPanel.add(Box.createHorizontalStrut(30));
+        summaryPanel.add(totalUnitsLabel);
         
-        // Add rate per hour
-        JLabel rateLabel = new JLabel("Rate per hour:", SwingConstants.RIGHT);
-        rateLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        panel.add(summaryPanel, BorderLayout.SOUTH);
         
-        JLabel rateValueLabel = new JLabel(String.format("%,.0f", ratePerHour), SwingConstants.CENTER);
-        rateValueLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        
-        JLabel totalHoursLabel = new JLabel(String.valueOf(totalHours), SwingConstants.CENTER);
-        totalHoursLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        
-        salaryPanel.add(rateLabel);
-        salaryPanel.add(rateValueLabel);
-        salaryPanel.add(totalHoursLabel);
-        
-        // Add total salary
-        JLabel totalLabel = new JLabel("Total:", SwingConstants.RIGHT);
-        totalLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        
-        JLabel totalValueLabel = new JLabel(String.format("%,.0f", ratePerHour * totalHours), SwingConstants.CENTER);
-        totalValueLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        
-        JLabel emptyLabel = new JLabel();
-        
-        salaryPanel.add(totalLabel);
-        salaryPanel.add(totalValueLabel);
-        salaryPanel.add(emptyLabel);
-        
-        panel.add(salaryPanel, BorderLayout.CENTER);
-        
-        return panel;
-    }
-    
-    private String getDayCode(String day) {
-        switch (day) {
-            case "Monday": return "M";
-            case "Tuesday": return "T";
-            case "Wednesday": return "W";
-            case "Thursday": return "TH";
-            case "Friday": return "F";
-            case "Saturday": return "S";
-            default: return "";
-        }
-    }
-    
-    private void addSampleSchedules() {
-        // Add sample schedules for demonstration
-        schedules.add(new Schedule("1001", "7:30 - 10:30 AM TTH"));
-        schedules.add(new Schedule("1001", "1:30 - 4:30 PM MWF"));
-    }
-    
-    private int calculateHours(String timeString) {
-        // Simple calculation based on the time range
-        // For example, "7:30 - 10:30 AM TTH" would be 3 hours
-        // This is a simplified version for demonstration
-        return 3;
-    }
-    
-    private void calculateTotalHours() {
-        totalHours = 0;
-        for (Schedule schedule : schedules) {
-            totalHours += calculateHours(schedule.getTime());
-        }
-    }
-    
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            FacultyInterface facultyInterface = new FacultyInterface("1001", "Fame B Anore");
-            facultyInterface.setVisible(true);
+        // Refresh button
+        JButton refreshButton = new JButton("Refresh");
+        refreshButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                refreshCourseLoad(tableModel, totalSubjectsLabel, totalUnitsLabel);
+            }
         });
+        
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        topPanel.add(refreshButton);
+        panel.add(topPanel, BorderLayout.NORTH);
+        
+        // Load the course load data
+        refreshCourseLoad(tableModel, totalSubjectsLabel, totalUnitsLabel);
+        
+        return panel;
+    }
+    
+    // Helper method to refresh course load data
+    private void refreshCourseLoad(DefaultTableModel model, JLabel totalSubjectsLabel, JLabel totalUnitsLabel) {
+        model.setRowCount(0);
+        List<Subject> assignedSubjects = dbManager.getAssignedSubjects(facultyUser.getUsername());
+        
+        int totalUnits = 0;
+        
+        for (Subject subject : assignedSubjects) {
+            // Combine all schedules into one string
+            StringBuilder scheduleString = new StringBuilder();
+            for (Schedule schedule : subject.getSchedules()) {
+                if (scheduleString.length() > 0) {
+                    scheduleString.append("; ");
+                }
+                scheduleString.append(schedule.toString());
+            }
+            
+            model.addRow(new Object[]{
+                subject.getId(),
+                subject.getName(),
+                subject.getDepartment(),
+                subject.getUnits(),
+                scheduleString.toString()
+            });
+            
+            totalUnits += subject.getUnits();
+        }
+        
+        totalSubjectsLabel.setText("Total Subjects: " + assignedSubjects.size());
+        totalUnitsLabel.setText("Total Units: " + totalUnits);
+    }
+    
+    // Salary Information Panel
+    private JPanel createSalaryPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        
+        // Table for salary breakdown
+        String[] columnNames = {"Subject ID", "Subject Name", "Salary"};
+        DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Make table read-only
+            }
+        };
+        
+        JTable salaryTable = new JTable(tableModel);
+        JScrollPane tableScrollPane = new JScrollPane(salaryTable);
+        
+        panel.add(tableScrollPane, BorderLayout.CENTER);
+        
+        // Summary panel
+        JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
+        
+        JLabel baseSalaryLabel = new JLabel("Base Salary: $0.00");
+        JLabel subjectSalaryLabel = new JLabel("Subject Salary: $0.00");
+        JLabel totalSalaryLabel = new JLabel("Total Salary: $0.00");
+        totalSalaryLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        
+        summaryPanel.add(baseSalaryLabel);
+        summaryPanel.add(subjectSalaryLabel);
+        summaryPanel.add(totalSalaryLabel);
+        
+        panel.add(summaryPanel, BorderLayout.SOUTH);
+        
+        // Refresh button
+        JButton refreshButton = new JButton("Refresh");
+        refreshButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                refreshSalaryInfo(tableModel, baseSalaryLabel, subjectSalaryLabel, totalSalaryLabel);
+            }
+        });
+        
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        topPanel.add(refreshButton);
+        panel.add(topPanel, BorderLayout.NORTH);
+        
+        // Load the salary data
+        refreshSalaryInfo(tableModel, baseSalaryLabel, subjectSalaryLabel, totalSalaryLabel);
+        
+        return panel;
+    }
+    
+    // Helper method to refresh salary information
+    private void refreshSalaryInfo(DefaultTableModel model, JLabel baseSalaryLabel, JLabel subjectSalaryLabel, JLabel totalSalaryLabel) {
+        model.setRowCount(0);
+        List<Subject> assignedSubjects = dbManager.getAssignedSubjects(facultyUser.getUsername());
+        
+        // Get base salary from user info
+        String baseSalaryStr = facultyUser.getUserInfo("baseSalary");
+        double baseSalary = 0;
+        if (baseSalaryStr != null && !baseSalaryStr.isEmpty()) {
+            try {
+                baseSalary = Double.parseDouble(baseSalaryStr);
+            } catch (NumberFormatException e) {
+                baseSalary = 0;
+            }
+        }
+        
+        double totalSubjectSalary = 0;
+        
+        for (Subject subject : assignedSubjects) {
+            model.addRow(new Object[]{
+                subject.getId(),
+                subject.getName(),
+                String.format("$%.2f", subject.getSalary())
+            });
+            
+            totalSubjectSalary += subject.getSalary();
+        }
+        
+        // Update labels
+        baseSalaryLabel.setText(String.format("Base Salary: $%.2f", baseSalary));
+        subjectSalaryLabel.setText(String.format("Subject Salary: $%.2f", totalSubjectSalary));
+        totalSalaryLabel.setText(String.format("Total Salary: $%.2f", baseSalary + totalSubjectSalary));
     }
 }
