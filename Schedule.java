@@ -1,22 +1,41 @@
 public class Schedule {
+    private String subjectId;
     private String roomNumber;
-    private String time;
-
-    public Schedule(String roomNumber, String time) {
+    private String dayOfWeek;
+    private String startTime;
+    private String endTime;
+    
+    public Schedule(String subjectId, String roomNumber, String dayOfWeek, String startTime, String endTime) {
+        this.subjectId = subjectId;
         this.roomNumber = roomNumber;
-        this.time = time;
+        this.dayOfWeek = dayOfWeek;
+        this.startTime = startTime;
+        this.endTime = endTime;
     }
-
+    
+    // Getters and setters
+    public String getSubjectId() {
+        return subjectId;
+    }
+    
     public String getRoomNumber() {
         return roomNumber;
     }
-
-    public String getTime() {
-        return time;
+    
+    public String getDayOfWeek() {
+        return dayOfWeek;
     }
-
+    
+    public String getStartTime() {
+        return startTime;
+    }
+    
+    public String getEndTime() {
+        return endTime;
+    }
+    
     @Override
     public String toString() {
-        return "Room: " + roomNumber + ", Time: " + time;
+        return dayOfWeek + " " + startTime + "-" + endTime + " (Room: " + roomNumber + ")";
     }
 }
