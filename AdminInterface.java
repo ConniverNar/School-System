@@ -118,6 +118,25 @@ public class AdminInterface extends JFrame {
         splitPane.setDividerLocation(200);
         panel.add(splitPane, BorderLayout.CENTER);
         
+
+        final JTextField finalUsernameField = usernameField;
+        final JPasswordField finalPasswordField = passwordField;
+        final JTextField finalNameField = nameField;
+        final JTextField finalAgeField = ageField;
+        final JComboBox<String> finalGenderComboBox = genderComboBox;
+        final JTextField finalDepartmentField = departmentField;
+        final JTextField finalSchoolYearField = schoolYearField;
+        final JList<String> finalStudentList = studentList;
+    
+    ActionListener clearFieldsAction = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            clearStudentFields(finalUsernameField, finalPasswordField, finalNameField, finalAgeField, finalGenderComboBox, finalDepartmentField, finalSchoolYearField, finalStudentList);
+        }
+    };
+    
+    clearButton.addActionListener(clearFieldsAction);
+
         // Event listeners
         studentList.addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -164,7 +183,6 @@ public class AdminInterface extends JFrame {
                 
                 dbManager.addUser(student);
                 refreshStudentList(studentListModel);
-                clearFields();
                 
                 JOptionPane.showMessageDialog(panel, "Student created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
@@ -224,34 +242,25 @@ public class AdminInterface extends JFrame {
                 if (confirm == JOptionPane.YES_OPTION) {
                     dbManager.removeUser(selectedUsername);
                     refreshStudentList(studentListModel);
-                    clearFields();
                     JOptionPane.showMessageDialog(panel, "Student deleted successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
                 }
             }
         });
         
-        clearButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                clearFields();
-            }
-        });
-        
-        // Method to clear fields
-        void clearFields() {
-            usernameField.setText("");
-            passwordField.setText("");
-            nameField.setText("");
-            ageField.setText("");
-            genderComboBox.setSelectedIndex(0);
-            departmentField.setText("");
-            schoolYearField.setText("");
-            studentList.clearSelection();
-        }
-        
         return panel;
     }
     
+    //  helper method clear of createStudentPanel()
+    private void clearStudentFields(JTextField usernameField, JPasswordField passwordField,   JTextField nameField, JTextField ageField,  JComboBox<String> genderComboBox, JTextField departmentField,   JTextField schoolYearField, JList<String> studentList) {
+    usernameField.setText("");
+    passwordField.setText("");
+    nameField.setText("");
+    ageField.setText("");
+    genderComboBox.setSelectedIndex(0);
+    departmentField.setText("");
+    schoolYearField.setText("");
+    studentList.clearSelection();
+}
     // Helper method to refresh student list
     private void refreshStudentList(DefaultListModel<String> model) {
         model.clear();
@@ -323,6 +332,25 @@ public class AdminInterface extends JFrame {
         splitPane.setDividerLocation(200);
         panel.add(splitPane, BorderLayout.CENTER);
         
+
+        final JTextField finalUsernameField = usernameField;
+        final JPasswordField finalPasswordField = passwordField;
+        final JTextField finalNameField = nameField;
+        final JTextField finalAgeField = ageField;
+        final JComboBox<String> finalGenderComboBox = genderComboBox;
+        final JTextField finalDepartmentField = departmentField;
+        final JList<String> finalFacultyList = facultyList;
+    
+    ActionListener clearFieldsAction = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            clearFacultyFields(finalUsernameField, finalPasswordField, finalNameField, 
+                               finalAgeField, finalGenderComboBox, finalDepartmentField, 
+                               finalFacultyList);
+        }
+    };
+    
+    clearButton.addActionListener(clearFieldsAction);
         // Event listeners
         facultyList.addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -367,7 +395,6 @@ public class AdminInterface extends JFrame {
                 
                 dbManager.addUser(faculty);
                 refreshFacultyList(facultyListModel);
-                clearFields();
                 
                 JOptionPane.showMessageDialog(panel, "Faculty created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
@@ -426,29 +453,10 @@ public class AdminInterface extends JFrame {
                 if (confirm == JOptionPane.YES_OPTION) {
                     dbManager.removeUser(selectedUsername);
                     refreshFacultyList(facultyListModel);
-                    clearFields();
                     JOptionPane.showMessageDialog(panel, "Faculty deleted successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
                 }
             }
         });
-        
-        clearButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                clearFields();
-            }
-        });
-        
-        // Method to clear fields
-        void clearFields() {
-            usernameField.setText("");
-            passwordField.setText("");
-            nameField.setText("");
-            ageField.setText("");
-            genderComboBox.setSelectedIndex(0);
-            departmentField.setText("");
-            facultyList.clearSelection();
-        }
         
         return panel;
     }
@@ -583,6 +591,29 @@ public class AdminInterface extends JFrame {
         splitPane.setDividerLocation(200);
         panel.add(splitPane, BorderLayout.CENTER);
         
+        // Move clearFields to be accessible by all action listeners
+    final JTextField finalIdField = idField;
+    final JTextField finalNameField = nameField;
+    final JTextField finalDepartmentField = departmentField;
+    final JTextField finalTuitionField = tuitionField;
+    final JTextField finalSalaryField = salaryField;
+    final JTextField finalUnitsField = unitsField;
+    final JTextArea finalPrerequisitesArea = prerequisitesArea;
+    final DefaultListModel<String> finalEnrolledListModel = enrolledListModel;
+    final DefaultListModel<String> finalScheduleListModel = scheduleListModel;
+    final JTextField finalRoomField = roomField;
+    final JTextField finalStartTimeField = startTimeField;
+    final JTextField finalEndTimeField = endTimeField;
+    final JList<String> finalSubjectList = subjectList;
+    
+    ActionListener clearFieldsAction = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            clearSubjectFields(finalIdField, finalNameField, finalDepartmentField, finalTuitionField, finalSalaryField, finalUnitsField,  finalPrerequisitesArea, finalEnrolledListModel,   finalScheduleListModel, finalRoomField,   finalStartTimeField, finalEndTimeField, finalSubjectList);
+        }
+    };
+    
+    clearButton.addActionListener(clearFieldsAction);
         // Event listeners
         subjectList.addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -668,7 +699,6 @@ public class AdminInterface extends JFrame {
                 
                 dbManager.addSubject(subject);
                 refreshSubjectList(subjectListModel);
-                clearFields();
                 
                 JOptionPane.showMessageDialog(panel, "Subject created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
@@ -773,18 +803,11 @@ public class AdminInterface extends JFrame {
                 if (confirm == JOptionPane.YES_OPTION) {
                     dbManager.removeSubject(subjectId);
                     refreshSubjectList(subjectListModel);
-                    clearFields();
                     JOptionPane.showMessageDialog(panel, "Subject deleted successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
                 }
             }
         });
         
-        clearButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                clearFields();
-            }
-        });
         
         // Schedule management
         addScheduleButton.addActionListener(new ActionListener() {
@@ -867,26 +890,38 @@ public class AdminInterface extends JFrame {
             }
         });
         
-        // Method to clear fields
-        void clearFields() {
-            idField.setText("");
-            nameField.setText("");
-            departmentField.setText("");
-            tuitionField.setText("");
-            salaryField.setText("");
-            unitsField.setText("");
-            prerequisitesArea.setText("");
-            enrolledListModel.clear();
-            scheduleListModel.clear();
-            roomField.setText("");
-            startTimeField.setText("");
-            endTimeField.setText("");
-            subjectList.clearSelection();
-        }
         
         return panel;
     }
     
+    //  helper method clear of createSubjectPanel()
+    private void clearSubjectFields(JTextField idField, JTextField nameField,  JTextField departmentField, JTextField tuitionField, JTextField salaryField, JTextField unitsField,  JTextArea prerequisitesArea, DefaultListModel<String> enrolledListModel,  DefaultListModel<String> scheduleListModel, JTextField roomField,  JTextField startTimeField, JTextField endTimeField,  JList<String> subjectList) {
+    idField.setText("");
+    nameField.setText("");
+    departmentField.setText("");
+    tuitionField.setText("");
+    salaryField.setText("");
+    unitsField.setText("");
+    prerequisitesArea.setText("");
+    enrolledListModel.clear();
+    scheduleListModel.clear();
+    roomField.setText("");
+    startTimeField.setText("");
+    endTimeField.setText("");
+    subjectList.clearSelection();
+    }
+
+    // helper method clear of createFacultyPanel()
+    private void clearFacultyFields(JTextField usernameField, JPasswordField passwordField, JTextField nameField, JTextField ageField, JComboBox<String> genderComboBox, JTextField departmentField, JList<String> facultyList) {
+    usernameField.setText("");
+    passwordField.setText("");
+    nameField.setText("");
+    ageField.setText("");
+    genderComboBox.setSelectedIndex(0);
+    departmentField.setText("");
+    facultyList.clearSelection();
+    }
+
     // Helper method to refresh subject list
     private void refreshSubjectList(DefaultListModel<String> model) {
         model.clear();
