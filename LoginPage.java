@@ -26,7 +26,7 @@ public class LoginPage extends JFrame {
         gbc.insets = new Insets(5, 5, 5, 5);
         
         // Title label
-        JLabel titleLabel = new JLabel("Login to School Management System");
+        JLabel titleLabel = new JLabel("School Management System");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
         gbc.gridx = 0;
         gbc.gridy = 0;
