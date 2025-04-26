@@ -592,19 +592,19 @@ public class AdminInterface extends JFrame {
         panel.add(splitPane, BorderLayout.CENTER);
         
         // Move clearFields to be accessible by all action listeners
-    final JTextField finalIdField = idField;
-    final JTextField finalNameField = nameField;
-    final JTextField finalDepartmentField = departmentField;
-    final JTextField finalTuitionField = tuitionField;
-    final JTextField finalSalaryField = salaryField;
-    final JTextField finalUnitsField = unitsField;
-    final JTextArea finalPrerequisitesArea = prerequisitesArea;
-    final DefaultListModel<String> finalEnrolledListModel = enrolledListModel;
-    final DefaultListModel<String> finalScheduleListModel = scheduleListModel;
-    final JTextField finalRoomField = roomField;
-    final JTextField finalStartTimeField = startTimeField;
-    final JTextField finalEndTimeField = endTimeField;
-    final JList<String> finalSubjectList = subjectList;
+        final JTextField finalIdField = idField;
+        final JTextField finalNameField = nameField;
+        final JTextField finalDepartmentField = departmentField;
+        final JTextField finalTuitionField = tuitionField;
+        final JTextField finalSalaryField = salaryField;
+        final JTextField finalUnitsField = unitsField;
+        final JTextArea finalPrerequisitesArea = prerequisitesArea;
+        final DefaultListModel<String> finalEnrolledListModel = enrolledListModel;
+        final DefaultListModel<String> finalScheduleListModel = scheduleListModel;
+        final JTextField finalRoomField = roomField;
+        final JTextField finalStartTimeField = startTimeField;
+        final JTextField finalEndTimeField = endTimeField;
+        final JList<String> finalSubjectList = subjectList;
     
     ActionListener clearFieldsAction = new ActionListener() {
         @Override
