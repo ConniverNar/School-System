@@ -57,11 +57,28 @@ public class Schedule {
     
     private int parseTimeToMinutes(String time) {
         try {
+            // Handle AM/PM format
+            boolean isPM = time.toUpperCase().contains("PM") && !time.toUpperCase().contains("12:");
+            boolean isAM12 = time.toUpperCase().contains("12:") && time.toUpperCase().contains("AM");
+            
+            // Remove AM/PM suffix
+            time = time.replaceAll("(?i)\\s*[AP]M", "");
+            
             String[] parts = time.split(":");
             int hours = Integer.parseInt(parts[0]);
-            int minutes = Integer.parseInt(parts[1]);
+            int minutes = Integer.parseInt(parts[1].trim());
+            
+            // Convert to 24-hour format
+            if (isPM) {
+                hours += 12;
+            }
+            if (isAM12) {
+                hours = 0; // 12 AM is 0 in 24-hour format
+            }
+            
             return hours * 60 + minutes;
         } catch (Exception e) {
+            System.out.println("Error parsing time: " + time + ", " + e.getMessage());
             return -1; // Invalid time format
         }
     }

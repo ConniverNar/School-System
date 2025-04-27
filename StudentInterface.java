@@ -148,18 +148,29 @@ public class StudentInterface extends JFrame {
             }
 
             // Check for schedule conflict if schedule exists
-            if (scheduleIndex >= 0 && dbManager.hasScheduleConflict(studentUser.getUsername(), subject, scheduleIndex)) {
-                JOptionPane.showMessageDialog(panel,
-                        "Cannot enroll in " + subject.getName() + " due to schedule conflict.",
-                        "Schedule Conflict", JOptionPane.ERROR_MESSAGE);
-                return;
+            if (scheduleIndex >= 0) {
+                // Get all currently enrolled subjects with their schedules
+                List<Subject> enrolledSubjects = dbManager.getEnrolledSubjects(studentUser.getUsername());
+                Schedule newSchedule = subject.getSchedules().get(scheduleIndex);
+                
+                // Check for conflicts with existing enrollments
+                for (Subject enrolledSubject : enrolledSubjects) {
+                    Schedule enrolledSchedule = enrolledSubject.getStudentSchedule(studentUser.getUsername());
+                    if (enrolledSchedule != null && newSchedule.conflictsWith(enrolledSchedule)) {
+                        JOptionPane.showMessageDialog(panel,
+                                "Cannot enroll in " + subject.getName() + " due to schedule conflict with " + 
+                                enrolledSubject.getName() + ".\n\n" +
+                                "Conflict details:\n" +
+                                "- New schedule: " + newSchedule.toString() + "\n" +
+                                "- Conflicting schedule: " + enrolledSchedule.toString(),
+                                "Schedule Conflict", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                }
             }
 
             // Enroll student
             subject.enrollStudent(studentUser.getUsername(), scheduleIndex);
-
-            // Ensure the schedule choice is saved correctly by updating studentScheduleChoices map
-            // (This is already handled inside enrollStudent method in Subject.java)
 
             JOptionPane.showMessageDialog(panel,
                     "Successfully enrolled in " + subject.getName(),
@@ -201,8 +212,28 @@ public class StudentInterface extends JFrame {
                         // Show available schedules
                         scheduleListModel.clear();
                         List<Schedule> schedules = selectedSubject[0].getSchedules();
+                        
+                        // Get enrolled subjects to check for potential conflicts
+                        List<Subject> enrolledSubjects = dbManager.getEnrolledSubjects(studentUser.getUsername());
+                        
                         for (int i = 0; i < schedules.size(); i++) {
-                            scheduleListModel.addElement("Schedule " + (i + 1) + ": " + schedules.get(i).toString());
+                            Schedule schedule = schedules.get(i);
+                            boolean hasConflict = false;
+                            String conflictInfo = "";
+                            
+                            // Check if this schedule conflicts with any enrolled subject
+                            for (Subject enrolledSubject : enrolledSubjects) {
+                                Schedule enrolledSchedule = enrolledSubject.getStudentSchedule(studentUser.getUsername());
+                                if (enrolledSchedule != null && schedule.conflictsWith(enrolledSchedule)) {
+                                    hasConflict = true;
+                                    conflictInfo = " (CONFLICTS with " + enrolledSubject.getName() + ")";
+                                    break;
+                                }
+                            }
+                            
+                            // Add schedule to list with conflict warning if applicable
+                            scheduleListModel.addElement("Schedule " + (i + 1) + ": " + schedules.get(i).toString() + 
+                                                        (hasConflict ? conflictInfo : ""));
                         }
                         schedulePanel.setVisible(!schedules.isEmpty());
                     }
@@ -242,9 +273,29 @@ public class StudentInterface extends JFrame {
                     // Add schedule selection combobox if the subject has schedules
                     if (!subject.getSchedules().isEmpty()) {
                         JComboBox<String> scheduleCombo = new JComboBox<>();
+                        
+                        // Get enrolled subjects to check for potential conflicts
+                        List<Subject> enrolledSubjects = dbManager.getEnrolledSubjects(studentUser.getUsername());
+                        
                         for (int i = 0; i < subject.getSchedules().size(); i++) {
-                            scheduleCombo.addItem("Schedule " + (i + 1));
+                            Schedule schedule = subject.getSchedules().get(i);
+                            boolean hasConflict = false;
+                            String conflictInfo = "";
+                            
+                            // Check if this schedule conflicts with any enrolled subject
+                            for (Subject enrolledSubject : enrolledSubjects) {
+                                Schedule enrolledSchedule = enrolledSubject.getStudentSchedule(studentUser.getUsername());
+                                if (enrolledSchedule != null && schedule.conflictsWith(enrolledSchedule)) {
+                                    hasConflict = true;
+                                    conflictInfo = " (CONFLICTS with " + enrolledSubject.getName() + ")";
+                                    break;
+                                }
+                            }
+                            
+                            scheduleCombo.addItem("Schedule " + (i + 1) + 
+                                                (hasConflict ? conflictInfo : ""));
                         }
+                        
                         scheduleSelections.put(subject.getId(), scheduleCombo);
                         subjectPanel.add(scheduleCombo);
                     }
@@ -326,35 +377,61 @@ public class StudentInterface extends JFrame {
                     StringBuilder conflictMessage = new StringBuilder("Schedule conflicts detected:\n");
 
                     // First check conflicts with existing enrolled subjects
+                    List<Subject> enrolledSubjects = dbManager.getEnrolledSubjects(studentUser.getUsername());
+                    Map<String, Schedule> selectedScheduleMap = new HashMap<>();
+                    
+                    // Create map of selected subject schedules
                     for (String subjectId : selectedSubjectIds) {
                         Subject subject = dbManager.getSubject(subjectId);
                         int scheduleIndex = selectedSchedules.get(subjectId);
-
-                        if (dbManager.hasScheduleConflict(
-                                studentUser.getUsername(), subject, scheduleIndex)) {
-                            hasConflicts = true;
-                            conflictMessage.append("- ").append(subject.getName())
-                                    .append(" conflicts with an enrolled subject\n");
+                        
+                        if (!subject.getSchedules().isEmpty()) {
+                            selectedScheduleMap.put(subjectId, subject.getSchedules().get(scheduleIndex));
+                        }
+                    }
+                    
+                    // Check conflicts with existing enrolled subjects
+                    for (String subjectId : selectedSubjectIds) {
+                        Subject subject = dbManager.getSubject(subjectId);
+                        Schedule newSchedule = selectedScheduleMap.get(subjectId);
+                        
+                        if (newSchedule == null) continue;
+                        
+                        for (Subject enrolledSubject : enrolledSubjects) {
+                            Schedule enrolledSchedule = enrolledSubject.getStudentSchedule(studentUser.getUsername());
+                            
+                            if (enrolledSchedule != null && newSchedule.conflictsWith(enrolledSchedule)) {
+                                hasConflicts = true;
+                                conflictMessage.append("- ").append(subject.getName())
+                                        .append(" conflicts with enrolled subject ")
+                                        .append(enrolledSubject.getName()).append("\n");
+                            }
                         }
                     }
 
                     // Then check conflicts between selected subjects
                     for (int i = 0; i < selectedSubjectIds.size(); i++) {
                         String subjectId1 = selectedSubjectIds.get(i);
+                        Schedule schedule1 = selectedScheduleMap.get(subjectId1);
+                        
+                        if (schedule1 == null) continue;
+                        
                         Subject subject1 = dbManager.getSubject(subjectId1);
-                        int scheduleIndex1 = selectedSchedules.get(subjectId1);
-                        Schedule schedule1 = subject1.getSchedules().get(scheduleIndex1);
 
                         for (int j = i + 1; j < selectedSubjectIds.size(); j++) {
                             String subjectId2 = selectedSubjectIds.get(j);
+                            Schedule schedule2 = selectedScheduleMap.get(subjectId2);
+                            
+                            if (schedule2 == null) continue;
+                            
                             Subject subject2 = dbManager.getSubject(subjectId2);
-                            int scheduleIndex2 = selectedSchedules.get(subjectId2);
-                            Schedule schedule2 = subject2.getSchedules().get(scheduleIndex2);
 
                             if (schedule1.conflictsWith(schedule2)) {
                                 hasConflicts = true;
                                 conflictMessage.append("- ").append(subject1.getName())
-                                        .append(" conflicts with ").append(subject2.getName()).append("\n");
+                                        .append(" conflicts with ").append(subject2.getName())
+                                        .append("\n  Schedule 1: ").append(schedule1.toString())
+                                        .append("\n  Schedule 2: ").append(schedule2.toString()).append("\n");
                             }
                         }
                     }
@@ -371,8 +448,6 @@ public class StudentInterface extends JFrame {
                         int scheduleIndex = selectedSchedules.get(subjectId);
                         subject.enrollStudent(studentUser.getUsername(), scheduleIndex);
                     }
-
-                    // After enrollment, ensure the schedule choices are saved correctly (handled in enrollStudent)
 
                     JOptionPane.showMessageDialog(batchDialog,
                             "Successfully enrolled in " + selectedSubjectIds.size() + " subjects",
@@ -613,10 +688,33 @@ public class StudentInterface extends JFrame {
                 DefaultListModel<String> scheduleListModel = new DefaultListModel<>();
                 JList<String> scheduleList = new JList<>(scheduleListModel);
 
-                // Add all schedules to the list
+                // Get all enrolled subjects except the current one being changed
+                List<Subject> otherEnrolledSubjects = new ArrayList<>();
+                for (Subject s : dbManager.getEnrolledSubjects(studentUser.getUsername())) {
+                    if (!s.getId().equals(subjectId)) {
+                        otherEnrolledSubjects.add(s);
+                    }
+                }
+
+                // Add all schedules to the list with conflict information
                 List<Schedule> schedules = subject.getSchedules();
                 for (int i = 0; i < schedules.size(); i++) {
-                    scheduleListModel.addElement("Schedule " + (i + 1) + ": " + schedules.get(i).toString());
+                    Schedule schedule = schedules.get(i);
+                    boolean hasConflict = false;
+                    String conflictInfo = "";
+                    
+                    // Check for conflicts with other enrolled subjects
+                    for (Subject other : otherEnrolledSubjects) {
+                        Schedule otherSchedule = other.getStudentSchedule(studentUser.getUsername());
+                        if (otherSchedule != null && schedule.conflictsWith(otherSchedule)) {
+                            hasConflict = true;
+                            conflictInfo = " (CONFLICTS with " + other.getName() + ")";
+                            break;
+                        }
+                    }
+                    
+                    scheduleListModel.addElement("Schedule " + (i + 1) + ": " + schedule.toString() + 
+                                                (hasConflict ? conflictInfo : ""));
                 }
 
                 // Highlight currently selected schedule
@@ -651,9 +749,23 @@ public class StudentInterface extends JFrame {
                     }
 
                     // Check for schedule conflicts
-                    if (dbManager.hasScheduleConflict(studentUser.getUsername(), subject, scheduleIndex)) {
+                    Schedule newSchedule = subject.getSchedules().get(scheduleIndex);
+                    boolean hasConflict = false;
+                    String conflictSubject = "";
+                    
+                    // Check conflicts with other enrolled subjects
+                    for (Subject other : otherEnrolledSubjects) {
+                        Schedule otherSchedule = other.getStudentSchedule(studentUser.getUsername());
+                        if (otherSchedule != null && newSchedule.conflictsWith(otherSchedule)) {
+                            hasConflict = true;
+                            conflictSubject = other.getName();
+                            break;
+                        }
+                    }
+                    
+                    if (hasConflict) {
                         JOptionPane.showMessageDialog(scheduleDialog,
-                                "This schedule conflicts with your other enrolled subjects",
+                                "Cannot select this schedule due to conflict with " + conflictSubject,
                                 "Schedule Conflict", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
