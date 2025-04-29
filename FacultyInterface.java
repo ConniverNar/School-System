@@ -555,9 +555,9 @@ public class FacultyInterface extends JFrame {
         // Summary panel
         JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
         
-        JLabel baseSalaryLabel = new JLabel("Base Salary: $0.00");
-        JLabel subjectSalaryLabel = new JLabel("Subject Salary: $0.00");
-        JLabel totalSalaryLabel = new JLabel("Total Salary: $0.00");
+        JLabel baseSalaryLabel = new JLabel("Base Salary: ₱0.00");
+        JLabel subjectSalaryLabel = new JLabel("Subject Salary: ₱0.00");
+        JLabel totalSalaryLabel = new JLabel("Total Salary: ₱0.00");
         totalSalaryLabel.setFont(new Font("Arial", Font.BOLD, 14));
         
         summaryPanel.add(baseSalaryLabel);
@@ -607,15 +607,15 @@ public class FacultyInterface extends JFrame {
             model.addRow(new Object[]{
                 subject.getId(),
                 subject.getName(),
-                String.format("$%.2f", subject.getSalary())
+                String.format("₱%.2f", subject.getSalary())
             });
             
             totalSubjectSalary += subject.getSalary();
         }
         
         // Update labels
-        baseSalaryLabel.setText(String.format("Base Salary: $%.2f", baseSalary));
-        subjectSalaryLabel.setText(String.format("Subject Salary: $%.2f", totalSubjectSalary));
-        totalSalaryLabel.setText(String.format("Total Salary: $%.2f", baseSalary + totalSubjectSalary));
+        baseSalaryLabel.setText(String.format("Base Salary: ₱%.2f", baseSalary));
+        subjectSalaryLabel.setText(String.format("Subject Salary: ₱%.2f", totalSubjectSalary));
+        totalSalaryLabel.setText(String.format("Total Salary: ₱%.2f", baseSalary + totalSubjectSalary));
     }
 }
