@@ -956,7 +956,7 @@ public class AdminInterface extends JFrame {
         
         // Tuition summary panel
         JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JLabel totalLabel = new JLabel("Total Tuition: $0.00");
+        JLabel totalLabel = new JLabel("Total Tuition: ₱0.00");
         totalLabel.setFont(new Font("Arial", Font.BOLD, 14));
         summaryPanel.add(totalLabel);
         
@@ -988,14 +988,14 @@ public class AdminInterface extends JFrame {
                             tableModel.addRow(new Object[]{
                                 subject.getId(),
                                 subject.getName(),
-                                String.format("$%.2f", subject.getTuition())
+                                String.format("₱%.2f", subject.getTuition())
                             });
                             
                             totalTuition += subject.getTuition();
                         }
                         
                         // Update total
-                        totalLabel.setText(String.format("Total Tuition: $%.2f", totalTuition));
+                        totalLabel.setText(String.format("Total Tuition: ₱%.2f", totalTuition));
                     }
                 }
             }
@@ -1032,9 +1032,9 @@ public class AdminInterface extends JFrame {
         JLabel baseSalaryLabel = new JLabel("Base Salary:");
         JTextField baseSalaryField = new JTextField("0.00");
         JLabel totalSubjectsLabel = new JLabel("Total from Subjects:");
-        JLabel totalSubjectsValueLabel = new JLabel("$0.00");
+        JLabel totalSubjectsValueLabel = new JLabel("₱0.00");
         JLabel grandTotalLabel = new JLabel("Grand Total:");
-        JLabel grandTotalValueLabel = new JLabel("$0.00");
+        JLabel grandTotalValueLabel = new JLabel("₱0.00");
         
         summaryPanel.add(baseSalaryLabel);
         summaryPanel.add(baseSalaryField);
@@ -1090,15 +1090,15 @@ public class AdminInterface extends JFrame {
                             tableModel.addRow(new Object[]{
                                 subject.getId(),
                                 subject.getName(),
-                                String.format("$%.2f", subject.getSalary())
+                                String.format("₱%.2f", subject.getSalary())
                             });
                             
                             totalSubjectsSalary += subject.getSalary();
                         }
                         
                         // Update totals
-                        totalSubjectsValueLabel.setText(String.format("$%.2f", totalSubjectsSalary));
-                        grandTotalValueLabel.setText(String.format("$%.2f", baseSalary + totalSubjectsSalary));
+                        totalSubjectsValueLabel.setText(String.format("₱%.2f", totalSubjectsSalary));
+                        grandTotalValueLabel.setText(String.format("₱%.2f", baseSalary + totalSubjectsSalary));
                     }
                 }
             }
@@ -1120,8 +1120,8 @@ public class AdminInterface extends JFrame {
                     faculty.setUserInfo("baseSalary", String.valueOf(baseSalary));
                     
                     // Update grand total
-                    double totalSubjectsSalary = Double.parseDouble(totalSubjectsValueLabel.getText().replace("$", ""));
-                    grandTotalValueLabel.setText(String.format("$%.2f", baseSalary + totalSubjectsSalary));
+                    double totalSubjectsSalary = Double.parseDouble(totalSubjectsValueLabel.getText().replace("₱", ""));
+                    grandTotalValueLabel.setText(String.format("₱%.2f", baseSalary + totalSubjectsSalary));
                     
                     JOptionPane.showMessageDialog(panel, "Base salary updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
                 } catch (NumberFormatException ex) {
