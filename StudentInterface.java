@@ -817,7 +817,7 @@ public class StudentInterface extends JFrame {
         JLabel totalSubjectsLabel = new JLabel("Number of Subjects:");
         JLabel totalSubjectsValueLabel = new JLabel("0");
         JLabel totalTuitionLabel = new JLabel("Total Tuition Fee:");
-        JLabel totalTuitionValueLabel = new JLabel("$0.00");
+        JLabel totalTuitionValueLabel = new JLabel("₱0.00");
 
         totalTuitionValueLabel.setFont(new Font("Arial", Font.BOLD, 14));
         totalTuitionValueLabel.setForeground(new Color(0, 100, 0));
@@ -843,14 +843,14 @@ public class StudentInterface extends JFrame {
                         subject.getId(),
                         subject.getName(),
                         subject.getUnits(),
-                        String.format("$%.2f", subject.getTuition())
+                        String.format("₱%.2f", subject.getTuition())
                 });
 
                 totalTuition += subject.getTuition();
             }
 
             totalSubjectsValueLabel.setText(String.valueOf(enrolledSubjects.size()));
-            totalTuitionValueLabel.setText(String.format("$%.2f", totalTuition));
+            totalTuitionValueLabel.setText(String.format("₱%.2f", totalTuition));
         };
 
         // Initial load of tuition data
