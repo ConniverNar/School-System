@@ -17,12 +17,16 @@ public class FacultyInterface extends JFrame {
     private JTabbedPane tabbedPane;
     
     // Map to track which schedules each faculty is assigned to for each subject
-    private Map<String, List<Integer>> facultyScheduleAssignments;
+    // Key format: subjectId_scheduleIndex, Value: faculty username
+    private Map<String, String> scheduleAssignments;
     
     public FacultyInterface(DatabaseManager dbManager, User facultyUser) {
         this.dbManager = dbManager;
         this.facultyUser = facultyUser;
-        this.facultyScheduleAssignments = new HashMap<>();
+        this.scheduleAssignments = new HashMap<>();
+        
+        // Load existing schedule assignments from database
+        loadScheduleAssignments();
         
         setTitle("Faculty Interface - " + facultyUser.getUserInfo("name"));
         setSize(800, 600);
@@ -58,6 +62,46 @@ public class FacultyInterface extends JFrame {
         setVisible(true);
     }
     
+    // Load schedule assignments from database
+    private void loadScheduleAssignments() {
+        // This would ideally fetch from database - for now we'll simulate
+        List<Subject> allSubjects = dbManager.getAllSubjects();
+        for (Subject subject : allSubjects) {
+            for (int i = 0; i < subject.getSchedules().size(); i++) {
+                String key = subject.getId() + "_" + i;
+                String assignedFaculty = dbManager.getScheduleAssignment(subject.getId(), i);
+                if (assignedFaculty != null && !assignedFaculty.isEmpty()) {
+                    scheduleAssignments.put(key, assignedFaculty);
+                }
+            }
+        }
+    }
+    
+    // Save schedule assignment to database
+    private void saveScheduleAssignment(String subjectId, int scheduleIndex, String facultyUsername) {
+        // This would save to database - for now we'll just update our local map
+        String key = subjectId + "_" + scheduleIndex;
+        if (facultyUsername == null) {
+            scheduleAssignments.remove(key);
+            dbManager.removeScheduleAssignment(subjectId, scheduleIndex);
+        } else {
+            scheduleAssignments.put(key, facultyUsername);
+            dbManager.assignScheduleToFaculty(subjectId, scheduleIndex, facultyUsername);
+        }
+    }
+    
+    // Check if a schedule is assigned to any faculty
+    private boolean isScheduleAssigned(String subjectId, int scheduleIndex) {
+        String key = subjectId + "_" + scheduleIndex;
+        return scheduleAssignments.containsKey(key);
+    }
+    
+    // Get username of faculty assigned to a schedule
+    private String getScheduleAssignedFaculty(String subjectId, int scheduleIndex) {
+        String key = subjectId + "_" + scheduleIndex;
+        return scheduleAssignments.get(key);
+    }
+    
     // Subject Assignment Panel
     private JPanel createSubjectAssignmentPanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -76,16 +120,22 @@ public class FacultyInterface extends JFrame {
         JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.setBorder(BorderFactory.createTitledBorder("Subject Schedules"));
         
-        // Change to checkboxes for multiple schedule selection
-        DefaultListModel<ScheduleItem> scheduleListModel = new DefaultListModel<>();
-        JList<ScheduleItem> scheduleList = new JList<>(scheduleListModel);
-        scheduleList.setCellRenderer(new CheckboxListRenderer());
-        JScrollPane scheduleScrollPane = new JScrollPane(scheduleList);
+        // Table for schedule display with assignment status
+        String[] columnNames = {"Schedule", "Assigned To", "Status"};
+        DefaultTableModel scheduleTableModel = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        
+        JTable scheduleTable = new JTable(scheduleTableModel);
+        JScrollPane scheduleScrollPane = new JScrollPane(scheduleTable);
         
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton assignButton = new JButton("Assign Selected Schedules");
+        JButton assignButton = new JButton("Assign Selected Schedule");
+        JButton removeButton = new JButton("Remove Assignment");
         assignButton.setEnabled(false);
-        JButton removeButton = new JButton("Remove Selected Schedules");
         removeButton.setEnabled(false);
         
         buttonPanel.add(assignButton);
@@ -99,7 +149,7 @@ public class FacultyInterface extends JFrame {
         splitPane.setDividerLocation(350);
         panel.add(splitPane, BorderLayout.CENTER);
         
-        // Load all subjects (including those with assigned faculty)
+        // Load all subjects
         refreshAllSubjects(subjectListModel);
         
         // Event listeners
@@ -111,44 +161,50 @@ public class FacultyInterface extends JFrame {
                     Subject subject = dbManager.getSubject(subjectId);
                     
                     if (subject != null) {
-                        boolean isAssignedToCurrentFaculty = subject.getAssignedFaculty() != null && 
-                                                           subject.getAssignedFaculty().equals(facultyUser.getUsername());
-                        boolean isAssignedToOtherFaculty = subject.getAssignedFaculty() != null && 
-                                                         !subject.getAssignedFaculty().isEmpty() && 
-                                                         !subject.getAssignedFaculty().equals(facultyUser.getUsername());
+                        // Display schedules with their assignment status
+                        scheduleTableModel.setRowCount(0);
                         
-                        // Display schedules with checkboxes
-                        scheduleListModel.clear();
                         for (int i = 0; i < subject.getSchedules().size(); i++) {
                             Schedule schedule = subject.getSchedules().get(i);
+                            String assignedFaculty = getScheduleAssignedFaculty(subject.getId(), i);
+                            String status;
                             
-                            // Check if this specific schedule is assigned to this faculty
-                            boolean scheduleSelected = false;
-                            String key = subject.getId() + "_" + facultyUser.getUsername();
-                            if (facultyScheduleAssignments.containsKey(key)) {
-                                scheduleSelected = facultyScheduleAssignments.get(key).contains(i);
+                            if (assignedFaculty == null) {
+                                status = "Available";
+                            } else if (assignedFaculty.equals(facultyUser.getUsername())) {
+                                status = "Assigned to you";
+                            } else {
+                                // Get the faculty name instead of just username
+                                String facultyName = dbManager.getFacultyName(assignedFaculty);
+                                status = "Assigned to other";
                             }
                             
-                            ScheduleItem item = new ScheduleItem(schedule, i, scheduleSelected);
-                            scheduleListModel.addElement(item);
+                            scheduleTableModel.addRow(new Object[]{
+                                schedule.toString(),
+                                assignedFaculty != null ? dbManager.getFacultyName(assignedFaculty) : "None",
+                                status
+                            });
                         }
                         
-                        // Enable/disable buttons based on subject assignment status
-                        assignButton.setEnabled(!subject.getSchedules().isEmpty() && !isAssignedToOtherFaculty);
-                        removeButton.setEnabled(isAssignedToCurrentFaculty && !subject.getSchedules().isEmpty());
+                        // Enable both buttons by default, they'll be disabled in selection handler if needed
+                        assignButton.setEnabled(true);
+                        removeButton.setEnabled(true);
                     }
                 }
             }
         });
         
-        // Schedule list mouse listener for toggling checkboxes
-        scheduleList.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                int index = scheduleList.locationToIndex(e.getPoint());
-                if (index >= 0) {
-                    ScheduleItem item = scheduleListModel.getElementAt(index);
-                    item.setSelected(!item.isSelected());
-                    scheduleList.repaint();
+        // Schedule table selection listener
+        scheduleTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (!e.getValueIsAdjusting() && scheduleTable.getSelectedRow() != -1) {
+                    int selectedRow = scheduleTable.getSelectedRow();
+                    String status = (String) scheduleTable.getValueAt(selectedRow, 2);
+                    
+                    // Set button states based on selected schedule status
+                    assignButton.setEnabled(status.equals("Available"));
+                    removeButton.setEnabled(status.equals("Assigned to you"));
                 }
             }
         });
@@ -157,74 +213,40 @@ public class FacultyInterface extends JFrame {
         removeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (subjectList.getSelectedValue() == null) {
-                    JOptionPane.showMessageDialog(panel, "Please select a subject", "Error", JOptionPane.ERROR_MESSAGE);
+                if (subjectList.getSelectedValue() == null || scheduleTable.getSelectedRow() == -1) {
+                    JOptionPane.showMessageDialog(panel, "Please select a subject and schedule", "Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 
                 String subjectId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from list display
+                int scheduleIndex = scheduleTable.getSelectedRow();
                 Subject subject = dbManager.getSubject(subjectId);
                 
                 if (subject != null) {
-                    // Verify subject is assigned to this faculty
-                    if (!facultyUser.getUsername().equals(subject.getAssignedFaculty())) {
+                    // Verify schedule is assigned to this faculty
+                    String assignedFaculty = getScheduleAssignedFaculty(subjectId, scheduleIndex);
+                    if (assignedFaculty == null || !assignedFaculty.equals(facultyUser.getUsername())) {
                         JOptionPane.showMessageDialog(panel, 
-                            "This subject is not assigned to you.", 
+                            "This schedule is not assigned to you.", 
                             "Cannot Remove", 
                             JOptionPane.WARNING_MESSAGE);
                         return;
                     }
                     
-                    // Get selected schedules to remove
-                    List<Integer> schedulesToRemove = new ArrayList<>();
-                    for (int i = 0; i < scheduleListModel.size(); i++) {
-                        ScheduleItem item = scheduleListModel.getElementAt(i);
-                        if (item.isSelected()) {
-                            schedulesToRemove.add(item.getIndex());
-                        }
-                    }
+                    // Remove assignment
+                    saveScheduleAssignment(subjectId, scheduleIndex, null);
                     
-                    if (schedulesToRemove.isEmpty()) {
-                        JOptionPane.showMessageDialog(panel, 
-                            "Please select at least one schedule to remove", 
-                            "No Selection", 
-                            JOptionPane.WARNING_MESSAGE);
-                        return;
-                    }
-                    
-                    // Remove selected schedules from faculty assignments
-                    String key = subject.getId() + "_" + facultyUser.getUsername();
-                    List<Integer> currentAssignments = facultyScheduleAssignments.getOrDefault(key, new ArrayList<>());
-                    currentAssignments.removeAll(schedulesToRemove);
-                    
-                    // If no schedules remain, remove the faculty from the subject entirely
-                    if (currentAssignments.isEmpty()) {
-                        subject.removeAssignedFaculty();
-                        facultyScheduleAssignments.remove(key);
-                        
-                        JOptionPane.showMessageDialog(panel, 
-                            "All schedules removed. You are no longer assigned to subject '" + subject.getName() + "'.", 
-                            "Removal Successful", 
-                            JOptionPane.INFORMATION_MESSAGE);
-                    } else {
-                        facultyScheduleAssignments.put(key, currentAssignments);
-                        
-                        JOptionPane.showMessageDialog(panel, 
-                            schedulesToRemove.size() + " schedule(s) removed from subject '" + subject.getName() + "'.", 
-                            "Removal Successful", 
-                            JOptionPane.INFORMATION_MESSAGE);
-                    }
+                    JOptionPane.showMessageDialog(panel, 
+                        "Schedule removed from your assignments.", 
+                        "Removal Successful", 
+                        JOptionPane.INFORMATION_MESSAGE);
                     
                     // Refresh views
                     refreshAllSubjects(subjectListModel);
                     
-                    // Also refresh the schedules list for the currently selected subject
+                    // Re-select the subject to refresh its schedules
                     if (subjectList.getSelectedValue() != null) {
-                        String selectedSubjectId = subjectList.getSelectedValue().split(" ")[0];
-                        if (selectedSubjectId.equals(subjectId)) {
-                            // Re-select the subject to refresh its schedules
-                            subjectList.setSelectedValue(subjectList.getSelectedValue(), true);
-                        }
+                        subjectList.setSelectedValue(subjectList.getSelectedValue(), true);
                     }
                 }
             }
@@ -233,119 +255,81 @@ public class FacultyInterface extends JFrame {
         assignButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (subjectList.getSelectedValue() == null) {
-                    JOptionPane.showMessageDialog(panel, "Please select a subject", "Error", JOptionPane.ERROR_MESSAGE);
+                if (subjectList.getSelectedValue() == null || scheduleTable.getSelectedRow() == -1) {
+                    JOptionPane.showMessageDialog(panel, "Please select a subject and schedule", "Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 
                 String subjectId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from list display
+                int scheduleIndex = scheduleTable.getSelectedRow();
                 Subject subject = dbManager.getSubject(subjectId);
                 
                 if (subject != null) {
-                    // Check if subject is already assigned to another faculty
-                    if (subject.getAssignedFaculty() != null && 
-                        !subject.getAssignedFaculty().isEmpty() && 
-                        !subject.getAssignedFaculty().equals(facultyUser.getUsername())) {
+                    // Check if schedule is already assigned
+                    if (isScheduleAssigned(subjectId, scheduleIndex)) {
                         JOptionPane.showMessageDialog(panel, 
-                            "This subject is already assigned to another faculty member.",
-                            "Subject Unavailable", 
-                            JOptionPane.WARNING_MESSAGE);
-                        return;
-                    }
-                    
-                    // Get selected schedules
-                    List<Integer> selectedScheduleIndices = new ArrayList<>();
-                    for (int i = 0; i < scheduleListModel.size(); i++) {
-                        ScheduleItem item = scheduleListModel.getElementAt(i);
-                        if (item.isSelected()) {
-                            selectedScheduleIndices.add(item.getIndex());
-                        }
-                    }
-                    
-                    if (selectedScheduleIndices.isEmpty()) {
-                        JOptionPane.showMessageDialog(panel, 
-                            "Please select at least one schedule", 
-                            "No Selection", 
+                            "This schedule is already assigned to another faculty member.",
+                            "Schedule Unavailable", 
                             JOptionPane.WARNING_MESSAGE);
                         return;
                     }
                     
                     // Check for schedule conflicts with existing assignments
-                    boolean hasConflict = false;
-                    String conflictingSubject = "";
-                    String conflictingSchedule = "";
+                    Schedule newSchedule = subject.getSchedules().get(scheduleIndex);
+                    String conflictingInfo = checkForScheduleConflicts(newSchedule);
                     
-                    List<Subject> assignedSubjects = dbManager.getAssignedSubjects(facultyUser.getUsername());
-                    
-                    for (Integer scheduleIndex : selectedScheduleIndices) {
-                        Schedule newSchedule = subject.getSchedules().get(scheduleIndex);
-                        
-                        for (Subject assignedSubject : assignedSubjects) {
-                            // Skip checking against the same subject (when updating schedules)
-                            if (assignedSubject.getId().equals(subject.getId())) {
-                                continue;
-                            }
-                            
-                            // Check only assigned schedules for this faculty
-                            String key = assignedSubject.getId() + "_" + facultyUser.getUsername();
-                            List<Integer> assignedIndices = facultyScheduleAssignments.getOrDefault(key, new ArrayList<>());
-                            
-                            for (Integer assignedIndex : assignedIndices) {
-                                if (assignedIndex < assignedSubject.getSchedules().size()) {
-                                    Schedule existingSchedule = assignedSubject.getSchedules().get(assignedIndex);
-                                    // Check for actual time overlap, not just same day
-                                    if (existingSchedule.getDayOfWeek().equals(newSchedule.getDayOfWeek()) &&
-                                        schedulesOverlap(existingSchedule, newSchedule)) {
-                                        hasConflict = true;
-                                        conflictingSubject = assignedSubject.getName();
-                                        conflictingSchedule = existingSchedule.toString();
-                                        break;
-                                    }
-                                }
-                            }
-                            if (hasConflict) break;
-                        }
-                        if (hasConflict) break;
-                    }
-                    
-                    if (hasConflict) {
+                    if (conflictingInfo != null) {
                         JOptionPane.showMessageDialog(panel, 
-                            "Schedule conflict detected with " + conflictingSubject + 
-                            " (" + conflictingSchedule + ").", 
+                            "Schedule conflict detected: " + conflictingInfo, 
                             "Schedule Conflict", 
                             JOptionPane.WARNING_MESSAGE);
                         return;
                     }
                     
-                    // Assign the subject to this faculty
-                    subject.setAssignedFaculty(facultyUser.getUsername());
-                    
-                    // Store which schedules this faculty is assigned to
-                    String key = subject.getId() + "_" + facultyUser.getUsername();
-                    facultyScheduleAssignments.put(key, selectedScheduleIndices);
+                    // Assign the schedule to this faculty
+                    saveScheduleAssignment(subjectId, scheduleIndex, facultyUser.getUsername());
                     
                     JOptionPane.showMessageDialog(panel, 
-                        "Subject '" + subject.getName() + "' has been assigned to you with " + 
-                        selectedScheduleIndices.size() + " schedule(s).", 
+                        "Schedule for '" + subject.getName() + "' has been assigned to you.", 
                         "Assignment Successful", 
                         JOptionPane.INFORMATION_MESSAGE);
                     
-                    // Refresh the subject list to show updated assignments
+                    // Refresh the views
                     refreshAllSubjects(subjectListModel);
                     
-                    // Also refresh the schedules list for the currently selected subject
+                    // Re-select the subject to refresh its schedules
                     if (subjectList.getSelectedValue() != null) {
-                        String selectedSubjectId = subjectList.getSelectedValue().split(" ")[0];
-                        if (selectedSubjectId.equals(subjectId)) {
-                            // Re-select the subject to refresh its schedules
-                            subjectList.setSelectedValue(subjectList.getSelectedValue(), true);
-                        }
+                        subjectList.setSelectedValue(subjectList.getSelectedValue(), true);
                     }
                 }
             }
         });
         
         return panel;
+    }
+    
+    // Check for schedule conflicts with faculty's existing assignments
+    private String checkForScheduleConflicts(Schedule newSchedule) {
+        List<Subject> allSubjects = dbManager.getAllSubjects();
+        
+        for (Subject subject : allSubjects) {
+            for (int i = 0; i < subject.getSchedules().size(); i++) {
+                // Check if this schedule is assigned to this faculty
+                String assignedFaculty = getScheduleAssignedFaculty(subject.getId(), i);
+                
+                if (assignedFaculty != null && assignedFaculty.equals(facultyUser.getUsername())) {
+                    Schedule existingSchedule = subject.getSchedules().get(i);
+                    
+                    // Check for time conflict
+                    if (existingSchedule.getDayOfWeek().equals(newSchedule.getDayOfWeek()) &&
+                        schedulesOverlap(existingSchedule, newSchedule)) {
+                        return subject.getName() + " (" + existingSchedule.toString() + ")";
+                    }
+                }
+            }
+        }
+        
+        return null; // No conflicts
     }
     
     // Helper method to check if two schedules overlap in time
@@ -371,7 +355,7 @@ public class FacultyInterface extends JFrame {
         return (s1Start <= s2Start && s2Start < s1End) || (s2Start <= s1Start && s1Start < s2End);
     }
     
-    // Helper method to refresh all subjects (not just available ones)
+    // Helper method to refresh all subjects list
     private void refreshAllSubjects(DefaultListModel<String> model) {
         model.clear();
         List<Subject> subjects = dbManager.getAllSubjects();
@@ -379,66 +363,19 @@ public class FacultyInterface extends JFrame {
         // Show all subjects in faculty's department
         for (Subject subject : subjects) {
             if (subject.getDepartment().equals(facultyUser.getUserInfo("department"))) {
-                // Add visual indicator if the subject is already assigned to this faculty
-                String assignmentStatus = "";
-                if (subject.getAssignedFaculty() != null && !subject.getAssignedFaculty().isEmpty()) {
-                    if (subject.getAssignedFaculty().equals(facultyUser.getUsername())) {
-                        assignmentStatus = " ✓"; // Checkmark for subjects assigned to current faculty
-                    } else {
-                        assignmentStatus = " (Assigned to another faculty)"; // For subjects assigned to other faculty
+                // Add visual indicator if any schedules are assigned to this faculty
+                boolean hasAssignedSchedules = false;
+                for (int i = 0; i < subject.getSchedules().size(); i++) {
+                    String assignedFaculty = getScheduleAssignedFaculty(subject.getId(), i);
+                    if (assignedFaculty != null && assignedFaculty.equals(facultyUser.getUsername())) {
+                        hasAssignedSchedules = true;
+                        break;
                     }
                 }
+                
+                String assignmentStatus = hasAssignedSchedules ? " ✓" : "";
                 model.addElement(subject.getId() + " - " + subject.getName() + assignmentStatus);
             }
-        }
-    }
-    
-    // Inner class for schedule items with checkboxes
-    private class ScheduleItem {
-        private Schedule schedule;
-        private int index;
-        private boolean selected;
-        
-        public ScheduleItem(Schedule schedule, int index, boolean selected) {
-            this.schedule = schedule;
-            this.index = index;
-            this.selected = selected;
-        }
-        
-        public Schedule getSchedule() {
-            return schedule;
-        }
-        
-        public int getIndex() {
-            return index;
-        }
-        
-        public boolean isSelected() {
-            return selected;
-        }
-        
-        public void setSelected(boolean selected) {
-            this.selected = selected;
-        }
-        
-        @Override
-        public String toString() {
-            return schedule.toString();
-        }
-    }
-    
-    // Custom renderer for checkbox list
-    private class CheckboxListRenderer extends JCheckBox implements ListCellRenderer<ScheduleItem> {
-        @Override
-        public Component getListCellRendererComponent(
-                JList<? extends ScheduleItem> list, ScheduleItem value, int index,
-                boolean isSelected, boolean cellHasFocus) {
-            
-            setText(value.toString());
-            setSelected(value.isSelected());
-            setBackground(isSelected ? list.getSelectionBackground() : list.getBackground());
-            setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
-            return this;
         }
     }
     
@@ -464,10 +401,13 @@ public class FacultyInterface extends JFrame {
         JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel totalSubjectsLabel = new JLabel("Total Subjects: 0");
         JLabel totalUnitsLabel = new JLabel("Total Units: 0");
+        JLabel totalSchedulesLabel = new JLabel("Total Schedules: 0");
         
         summaryPanel.add(totalSubjectsLabel);
         summaryPanel.add(Box.createHorizontalStrut(30));
         summaryPanel.add(totalUnitsLabel);
+        summaryPanel.add(Box.createHorizontalStrut(30));
+        summaryPanel.add(totalSchedulesLabel);
         
         panel.add(summaryPanel, BorderLayout.SOUTH);
         
@@ -476,7 +416,7 @@ public class FacultyInterface extends JFrame {
         refreshButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                refreshCourseLoad(tableModel, totalSubjectsLabel, totalUnitsLabel);
+                refreshCourseLoad(tableModel, totalSubjectsLabel, totalUnitsLabel, totalSchedulesLabel);
             }
         });
         
@@ -485,38 +425,56 @@ public class FacultyInterface extends JFrame {
         panel.add(topPanel, BorderLayout.NORTH);
         
         // Load the course load data
-        refreshCourseLoad(tableModel, totalSubjectsLabel, totalUnitsLabel);
+        refreshCourseLoad(tableModel, totalSubjectsLabel, totalUnitsLabel, totalSchedulesLabel);
         
         return panel;
     }
     
     // Helper method to refresh course load data
-    private void refreshCourseLoad(DefaultTableModel model, JLabel totalSubjectsLabel, JLabel totalUnitsLabel) {
+    private void refreshCourseLoad(DefaultTableModel model, JLabel totalSubjectsLabel, 
+                                JLabel totalUnitsLabel, JLabel totalSchedulesLabel) {
         model.setRowCount(0);
-        List<Subject> assignedSubjects = dbManager.getAssignedSubjects(facultyUser.getUsername());
+        List<Subject> allSubjects = dbManager.getAllSubjects();
         
+        // Use a map to group schedules by subject ID
+        Map<String, List<Schedule>> subjectSchedules = new HashMap<>();
+        Map<String, Subject> subjectMap = new HashMap<>();
+        
+        int totalSchedules = 0;
         int totalUnits = 0;
         
-        for (Subject subject : assignedSubjects) {
-            // Only show schedules that this faculty is assigned to
-            String key = subject.getId() + "_" + facultyUser.getUsername();
-            List<Integer> assignedScheduleIndices = facultyScheduleAssignments.getOrDefault(key, new ArrayList<>());
+        // First collect all assigned schedules
+        for (Subject subject : allSubjects) {
+            boolean hasAssignedSchedule = false;
+            List<Schedule> assignedSchedules = new ArrayList<>();
             
-            // If there are no specifically assigned schedules, continue to next subject
-            if (assignedScheduleIndices.isEmpty()) {
-                continue;
+            for (int i = 0; i < subject.getSchedules().size(); i++) {
+                String assignedFaculty = getScheduleAssignedFaculty(subject.getId(), i);
+                if (assignedFaculty != null && assignedFaculty.equals(facultyUser.getUsername())) {
+                    assignedSchedules.add(subject.getSchedules().get(i));
+                    hasAssignedSchedule = true;
+                    totalSchedules++;
+                }
             }
             
-            // Get assigned schedules only
+            if (hasAssignedSchedule) {
+                subjectSchedules.put(subject.getId(), assignedSchedules);
+                subjectMap.put(subject.getId(), subject);
+                totalUnits += subject.getUnits();
+            }
+        }
+        
+        // Now add them to the table
+        for (String subjectId : subjectSchedules.keySet()) {
+            Subject subject = subjectMap.get(subjectId);
+            List<Schedule> schedules = subjectSchedules.get(subjectId);
+            
             StringBuilder scheduleString = new StringBuilder();
-            for (Integer index : assignedScheduleIndices) {
-                if (index < subject.getSchedules().size()) {
-                    Schedule schedule = subject.getSchedules().get(index);
-                    if (scheduleString.length() > 0) {
-                        scheduleString.append("; ");
-                    }
-                    scheduleString.append(schedule.toString());
+            for (Schedule schedule : schedules) {
+                if (scheduleString.length() > 0) {
+                    scheduleString.append("; ");
                 }
+                scheduleString.append(schedule.toString());
             }
             
             model.addRow(new Object[]{
@@ -526,12 +484,11 @@ public class FacultyInterface extends JFrame {
                 subject.getUnits(),
                 scheduleString.toString()
             });
-            
-            totalUnits += subject.getUnits();
         }
         
-        totalSubjectsLabel.setText("Total Subjects: " + model.getRowCount());
+        totalSubjectsLabel.setText("Total Subjects: " + subjectSchedules.size());
         totalUnitsLabel.setText("Total Units: " + totalUnits);
+        totalSchedulesLabel.setText("Total Schedules: " + totalSchedules);
     }
     
     // Salary Information Panel
@@ -539,7 +496,7 @@ public class FacultyInterface extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         
         // Table for salary breakdown
-        String[] columnNames = {"Subject ID", "Subject Name", "Salary"};
+        String[] columnNames = {"Subject ID", "Subject Name", "Schedules", "Salary per Schedule", "Total"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -586,9 +543,10 @@ public class FacultyInterface extends JFrame {
     }
     
     // Helper method to refresh salary information
-    private void refreshSalaryInfo(DefaultTableModel model, JLabel baseSalaryLabel, JLabel subjectSalaryLabel, JLabel totalSalaryLabel) {
+    private void refreshSalaryInfo(DefaultTableModel model, JLabel baseSalaryLabel, 
+                               JLabel subjectSalaryLabel, JLabel totalSalaryLabel) {
         model.setRowCount(0);
-        List<Subject> assignedSubjects = dbManager.getAssignedSubjects(facultyUser.getUsername());
+        List<Subject> allSubjects = dbManager.getAllSubjects();
         
         // Get base salary from user info
         String baseSalaryStr = facultyUser.getUserInfo("baseSalary");
@@ -603,14 +561,33 @@ public class FacultyInterface extends JFrame {
         
         double totalSubjectSalary = 0;
         
-        for (Subject subject : assignedSubjects) {
-            model.addRow(new Object[]{
-                subject.getId(),
-                subject.getName(),
-                String.format("₱%.2f", subject.getSalary())
-            });
+        // Process each subject
+        for (Subject subject : allSubjects) {
+            int assignedSchedulesCount = 0;
             
-            totalSubjectSalary += subject.getSalary();
+            // Count assigned schedules for this subject
+            for (int i = 0; i < subject.getSchedules().size(); i++) {
+                String assignedFaculty = getScheduleAssignedFaculty(subject.getId(), i);
+                if (assignedFaculty != null && assignedFaculty.equals(facultyUser.getUsername())) {
+                    assignedSchedulesCount++;
+                }
+            }
+            
+            if (assignedSchedulesCount > 0) {
+                // Calculate salary based on number of assigned schedules
+                double salaryPerSchedule = subject.getSalary() / subject.getSchedules().size();
+                double totalSubjectSalaryForThisFaculty = salaryPerSchedule * assignedSchedulesCount;
+                
+                model.addRow(new Object[]{
+                    subject.getId(),
+                    subject.getName(),
+                    assignedSchedulesCount,
+                    String.format("₱%.2f", salaryPerSchedule),
+                    String.format("₱%.2f", totalSubjectSalaryForThisFaculty)
+                });
+                
+                totalSubjectSalary += totalSubjectSalaryForThisFaculty;
+            }
         }
         
         // Update labels
