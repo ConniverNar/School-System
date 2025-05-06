@@ -555,10 +555,12 @@ private JPanel createSubjectPanel() {
     // Button to enroll selected student
     JButton enrollButton = new JButton("Forcibly Enroll Student");
     JButton unenrollButton = new JButton("Unenroll Selected Student");
+    JButton refreshEnrolledButton = new JButton("Refresh Enrolled Students");
     
     JPanel enrollActionPanel = new JPanel(new FlowLayout());
     enrollActionPanel.add(enrollButton);
     enrollActionPanel.add(unenrollButton);
+    enrollActionPanel.add(refreshEnrolledButton);
     
     enrollStudentPanel.add(studentComboBox, BorderLayout.CENTER);
     enrollStudentPanel.add(enrollActionPanel, BorderLayout.SOUTH);
@@ -627,10 +629,14 @@ private JPanel createSubjectPanel() {
     }
     
     JButton assignFacultyButton = new JButton("Assign Faculty");
+    JButton refreshFacultyButton = new JButton("Refresh Faculty Assignment");
     
     JPanel assignFacultyPanel = new JPanel(new BorderLayout());
     assignFacultyPanel.add(facultyComboBox, BorderLayout.CENTER);
-    assignFacultyPanel.add(assignFacultyButton, BorderLayout.EAST);
+    JPanel assignFacultyButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    assignFacultyButtonPanel.add(assignFacultyButton);
+    assignFacultyButtonPanel.add(refreshFacultyButton);
+    assignFacultyPanel.add(assignFacultyButtonPanel, BorderLayout.EAST);
     
     facultyPanel.add(currentFacultyPanel, BorderLayout.NORTH);
     facultyPanel.add(assignFacultyPanel, BorderLayout.CENTER);
@@ -1068,6 +1074,58 @@ private JPanel createSubjectPanel() {
                 subject.setAssignedFaculty(facultyUsername);
                 currentFacultyLabel.setText("Current Faculty: " + facultyEntry);
                 JOptionPane.showMessageDialog(panel, "Faculty assigned successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
+    });
+    
+    // Refresh enrolled students button action listener
+    refreshEnrolledButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (subjectList.getSelectedValue() != null) {
+                String subjectId = subjectList.getSelectedValue().split(" ")[0];
+                Subject subject = dbManager.getSubject(subjectId);
+                if (subject != null) {
+                    enrolledListModel.clear();
+                    for (String student : subject.getEnrolledStudents()) {
+                        User studentUser = dbManager.getUser(student);
+                        if (studentUser != null) {
+                            enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name"));
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Refresh faculty assignment button action listener
+    refreshFacultyButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (subjectList.getSelectedValue() != null) {
+                String subjectId = subjectList.getSelectedValue().split(" ")[0];
+                Subject subject = dbManager.getSubject(subjectId);
+                if (subject != null) {
+                    // Refresh faculty combo box
+                    facultyComboModel.removeAllElements();
+                    facultyComboModel.addElement("None");
+                    List<User> allFaculty = dbManager.getUsersByType(User.UserType.FACULTY);
+                    for (User faculty : allFaculty) {
+                        facultyComboModel.addElement(faculty.getUsername() + " - " + faculty.getUserInfo("name"));
+                    }
+                    // Update current faculty label
+                    String assignedFaculty = subject.getAssignedFaculty();
+                    if (assignedFaculty != null && !assignedFaculty.isEmpty()) {
+                        User faculty = dbManager.getUser(assignedFaculty);
+                        if (faculty != null) {
+                            currentFacultyLabel.setText("Current Faculty: " + assignedFaculty + " - " + faculty.getUserInfo("name"));
+                        } else {
+                            currentFacultyLabel.setText("Current Faculty: " + assignedFaculty);
+                        }
+                    } else {
+                        currentFacultyLabel.setText("Current Faculty: None");
+                    }
+                }
             }
         }
     });
