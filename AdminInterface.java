@@ -471,224 +471,378 @@ public class AdminInterface extends JFrame {
     }
     
     // Subject Management Panel
-    private JPanel createSubjectPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        
-        // Subject list on the left
-        DefaultListModel<String> subjectListModel = new DefaultListModel<>();
-        JList<String> subjectList = new JList<>(subjectListModel);
-        JScrollPane subjectScrollPane = new JScrollPane(subjectList);
-        subjectScrollPane.setBorder(BorderFactory.createTitledBorder("Subject List"));
-        
-        // Refresh the subject list
-        refreshSubjectList(subjectListModel);
-        
-        // Create panels for subject details, enrolled students, and schedules
-        JTabbedPane detailsTabbedPane = new JTabbedPane();
-        
-        // Subject details panel
-        JPanel subjectDetailsPanel = new JPanel(new BorderLayout());
-        
-        JPanel fieldsPanel = new JPanel(new GridLayout(0, 2, 5, 5));
-        
-        JTextField idField = new JTextField(15);
-        JTextField nameField = new JTextField(15);
-        JTextField departmentField = new JTextField(15);
-        JTextField tuitionField = new JTextField(15);
-        JTextField salaryField = new JTextField(15);
-        JTextField unitsField = new JTextField(15);
-        JTextArea prerequisitesArea = new JTextArea(4, 15);
-        JScrollPane prerequisitesScrollPane = new JScrollPane(prerequisitesArea);
-        
-        fieldsPanel.add(new JLabel("Subject ID:"));
-        fieldsPanel.add(idField);
-        fieldsPanel.add(new JLabel("Name:"));
-        fieldsPanel.add(nameField);
-        fieldsPanel.add(new JLabel("Department:"));
-        fieldsPanel.add(departmentField);
-        fieldsPanel.add(new JLabel("Tuition:"));
-        fieldsPanel.add(tuitionField);
-        fieldsPanel.add(new JLabel("Salary:"));
-        fieldsPanel.add(salaryField);
-        fieldsPanel.add(new JLabel("Units:"));
-        fieldsPanel.add(unitsField);
-        fieldsPanel.add(new JLabel("Prerequisites (IDs, one per line):"));
-        fieldsPanel.add(prerequisitesScrollPane);
-        
-        subjectDetailsPanel.add(fieldsPanel, BorderLayout.CENTER);
-        
-        // Buttons panel for actions
-        JPanel buttonsPanel = new JPanel(new FlowLayout());
-        
-        JButton createButton = new JButton("Create Subject");
-        JButton updateButton = new JButton("Update Subject");
-        JButton deleteButton = new JButton("Delete Subject");
-        JButton clearButton = new JButton("Clear Fields");
-        
-        buttonsPanel.add(createButton);
-        buttonsPanel.add(updateButton);
-        buttonsPanel.add(deleteButton);
-        buttonsPanel.add(clearButton);
-        
-        subjectDetailsPanel.add(buttonsPanel, BorderLayout.SOUTH);
-        
-        // Enrolled students panel
-        JPanel enrolledPanel = new JPanel(new BorderLayout());
-        
-        DefaultListModel<String> enrolledListModel = new DefaultListModel<>();
-        JList<String> enrolledList = new JList<>(enrolledListModel);
-        JScrollPane enrolledScrollPane = new JScrollPane(enrolledList);
-        
-        enrolledPanel.add(enrolledScrollPane, BorderLayout.CENTER);
-        
-        // Schedules panel
-        JPanel schedulesPanel = new JPanel(new BorderLayout());
-        
-        DefaultListModel<String> scheduleListModel = new DefaultListModel<>();
-        JList<String> scheduleList = new JList<>(scheduleListModel);
-        JScrollPane scheduleScrollPane = new JScrollPane(scheduleList);
-        
-        JPanel scheduleDetailsPanel = new JPanel(new GridLayout(0, 2, 5, 5));
-        
-        JTextField roomField = new JTextField(15);
-        JComboBox<String> dayComboBox = new JComboBox<>(new String[]{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"});
-        JTextField startTimeField = new JTextField(15);
-        JTextField endTimeField = new JTextField(15);
-        
-        scheduleDetailsPanel.add(new JLabel("Room Number:"));
-        scheduleDetailsPanel.add(roomField);
-        scheduleDetailsPanel.add(new JLabel("Day:"));
-        scheduleDetailsPanel.add(dayComboBox);
-        scheduleDetailsPanel.add(new JLabel("Start Time:"));
-        scheduleDetailsPanel.add(startTimeField);
-        scheduleDetailsPanel.add(new JLabel("End Time:"));
-        scheduleDetailsPanel.add(endTimeField);
-        
-        JPanel scheduleButtonsPanel = new JPanel(new FlowLayout());
-        
-        JButton addScheduleButton = new JButton("Add Schedule");
-        JButton removeScheduleButton = new JButton("Remove Schedule");
-        JButton clearScheduleButton = new JButton("Clear Fields");
-        
-        scheduleButtonsPanel.add(addScheduleButton);
-        scheduleButtonsPanel.add(removeScheduleButton);
-        scheduleButtonsPanel.add(clearScheduleButton);
-        
-        JPanel scheduleControlPanel = new JPanel(new BorderLayout());
-        scheduleControlPanel.add(scheduleDetailsPanel, BorderLayout.CENTER);
-        scheduleControlPanel.add(scheduleButtonsPanel, BorderLayout.SOUTH);
-        
-        schedulesPanel.add(scheduleScrollPane, BorderLayout.CENTER);
-        schedulesPanel.add(scheduleControlPanel, BorderLayout.SOUTH);
-        
-        // Add panels to tabbed pane
-        detailsTabbedPane.addTab("Subject Details", subjectDetailsPanel);
-        detailsTabbedPane.addTab("Enrolled Students", enrolledPanel);
-        detailsTabbedPane.addTab("Schedules", schedulesPanel);
-        
-        // Split pane for list and details
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, subjectScrollPane, detailsTabbedPane);
-        splitPane.setDividerLocation(200);
-        panel.add(splitPane, BorderLayout.CENTER);
-        
-        // Move clearFields to be accessible by all action listeners
-        final JTextField finalIdField = idField;
-        final JTextField finalNameField = nameField;
-        final JTextField finalDepartmentField = departmentField;
-        final JTextField finalTuitionField = tuitionField;
-        final JTextField finalSalaryField = salaryField;
-        final JTextField finalUnitsField = unitsField;
-        final JTextArea finalPrerequisitesArea = prerequisitesArea;
-        final DefaultListModel<String> finalEnrolledListModel = enrolledListModel;
-        final DefaultListModel<String> finalScheduleListModel = scheduleListModel;
-        final JTextField finalRoomField = roomField;
-        final JTextField finalStartTimeField = startTimeField;
-        final JTextField finalEndTimeField = endTimeField;
-        final JList<String> finalSubjectList = subjectList;
+private JPanel createSubjectPanel() {
+    JPanel panel = new JPanel(new BorderLayout());
     
+    // Subject list on the left
+    DefaultListModel<String> subjectListModel = new DefaultListModel<>();
+    JList<String> subjectList = new JList<>(subjectListModel);
+    JScrollPane subjectScrollPane = new JScrollPane(subjectList);
+    subjectScrollPane.setBorder(BorderFactory.createTitledBorder("Subject List"));
+    
+    // Refresh the subject list
+    refreshSubjectList(subjectListModel);
+    
+    // Create panels for subject details, enrolled students, and schedules
+    JTabbedPane detailsTabbedPane = new JTabbedPane();
+    
+    // Subject details panel
+    JPanel subjectDetailsPanel = new JPanel(new BorderLayout());
+    
+    JPanel fieldsPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+    
+    JTextField idField = new JTextField(15);
+    JTextField nameField = new JTextField(15);
+    JTextField departmentField = new JTextField(15);
+    JTextField tuitionField = new JTextField(15);
+    JTextField salaryField = new JTextField(15);
+    JTextField unitsField = new JTextField(15);
+    JTextArea prerequisitesArea = new JTextArea(4, 15);
+    JScrollPane prerequisitesScrollPane = new JScrollPane(prerequisitesArea);
+    
+    fieldsPanel.add(new JLabel("Subject ID:"));
+    fieldsPanel.add(idField);
+    fieldsPanel.add(new JLabel("Name:"));
+    fieldsPanel.add(nameField);
+    fieldsPanel.add(new JLabel("Department:"));
+    fieldsPanel.add(departmentField);
+    fieldsPanel.add(new JLabel("Tuition:"));
+    fieldsPanel.add(tuitionField);
+    fieldsPanel.add(new JLabel("Salary:"));
+    fieldsPanel.add(salaryField);
+    fieldsPanel.add(new JLabel("Units:"));
+    fieldsPanel.add(unitsField);
+    fieldsPanel.add(new JLabel("Prerequisites (IDs, one per line):"));
+    fieldsPanel.add(prerequisitesScrollPane);
+    
+    subjectDetailsPanel.add(fieldsPanel, BorderLayout.CENTER);
+    
+    // Buttons panel for actions
+    JPanel buttonsPanel = new JPanel(new FlowLayout());
+    
+    JButton createButton = new JButton("Create Subject");
+    JButton updateButton = new JButton("Update Subject");
+    JButton deleteButton = new JButton("Delete Subject");
+    JButton clearButton = new JButton("Clear Fields");
+    
+    buttonsPanel.add(createButton);
+    buttonsPanel.add(updateButton);
+    buttonsPanel.add(deleteButton);
+    buttonsPanel.add(clearButton);
+    
+    subjectDetailsPanel.add(buttonsPanel, BorderLayout.SOUTH);
+    
+    // Enrolled students panel
+    JPanel enrolledPanel = new JPanel(new BorderLayout());
+    
+    DefaultListModel<String> enrolledListModel = new DefaultListModel<>();
+    JList<String> enrolledList = new JList<>(enrolledListModel);
+    JScrollPane enrolledScrollPane = new JScrollPane(enrolledList);
+    
+    // Add new panel for enrolling students
+    JPanel enrollStudentPanel = new JPanel(new BorderLayout());
+    
+    // ComboBox for selecting students
+    DefaultComboBoxModel<String> studentComboModel = new DefaultComboBoxModel<>();
+    JComboBox<String> studentComboBox = new JComboBox<>(studentComboModel);
+    
+    // Populate student combo box
+    List<User> allStudents = dbManager.getUsersByType(User.UserType.STUDENT);
+    for (User student : allStudents) {
+        studentComboModel.addElement(student.getUsername() + " - " + student.getUserInfo("name"));
+    }
+    
+    // Button to enroll selected student
+    JButton enrollButton = new JButton("Forcibly Enroll Student");
+    JButton unenrollButton = new JButton("Unenroll Selected Student");
+    
+    JPanel enrollActionPanel = new JPanel(new FlowLayout());
+    enrollActionPanel.add(enrollButton);
+    enrollActionPanel.add(unenrollButton);
+    
+    enrollStudentPanel.add(studentComboBox, BorderLayout.CENTER);
+    enrollStudentPanel.add(enrollActionPanel, BorderLayout.SOUTH);
+    
+    enrolledPanel.add(enrolledScrollPane, BorderLayout.CENTER);
+    enrolledPanel.add(enrollStudentPanel, BorderLayout.SOUTH);
+    
+    // Schedules panel
+    JPanel schedulesPanel = new JPanel(new BorderLayout());
+    
+    DefaultListModel<String> scheduleListModel = new DefaultListModel<>();
+    JList<String> scheduleList = new JList<>(scheduleListModel);
+    JScrollPane scheduleScrollPane = new JScrollPane(scheduleList);
+    
+    JPanel scheduleDetailsPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+    
+    JTextField roomField = new JTextField(15);
+    JComboBox<String> dayComboBox = new JComboBox<>(new String[]{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"});
+    JTextField startTimeField = new JTextField(15);
+    JTextField endTimeField = new JTextField(15);
+    
+    scheduleDetailsPanel.add(new JLabel("Room Number:"));
+    scheduleDetailsPanel.add(roomField);
+    scheduleDetailsPanel.add(new JLabel("Day:"));
+    scheduleDetailsPanel.add(dayComboBox);
+    scheduleDetailsPanel.add(new JLabel("Start Time:"));
+    scheduleDetailsPanel.add(startTimeField);
+    scheduleDetailsPanel.add(new JLabel("End Time:"));
+    scheduleDetailsPanel.add(endTimeField);
+    
+    JPanel scheduleButtonsPanel = new JPanel(new FlowLayout());
+    
+    JButton addScheduleButton = new JButton("Add Schedule");
+    JButton removeScheduleButton = new JButton("Remove Schedule");
+    JButton clearScheduleButton = new JButton("Clear Fields");
+    
+    scheduleButtonsPanel.add(addScheduleButton);
+    scheduleButtonsPanel.add(removeScheduleButton);
+    scheduleButtonsPanel.add(clearScheduleButton);
+    
+    JPanel scheduleControlPanel = new JPanel(new BorderLayout());
+    scheduleControlPanel.add(scheduleDetailsPanel, BorderLayout.CENTER);
+    scheduleControlPanel.add(scheduleButtonsPanel, BorderLayout.SOUTH);
+    
+    schedulesPanel.add(scheduleScrollPane, BorderLayout.CENTER);
+    schedulesPanel.add(scheduleControlPanel, BorderLayout.SOUTH);
+    
+    // Add Faculty Assignment panel
+    JPanel facultyPanel = new JPanel(new BorderLayout());
+    facultyPanel.setBorder(BorderFactory.createTitledBorder("Faculty Assignment"));
+    
+    // Current faculty assignment
+    JPanel currentFacultyPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    JLabel currentFacultyLabel = new JLabel("Current Faculty: None");
+    currentFacultyPanel.add(currentFacultyLabel);
+    
+    // Faculty selection
+    DefaultComboBoxModel<String> facultyComboModel = new DefaultComboBoxModel<>();
+    JComboBox<String> facultyComboBox = new JComboBox<>(facultyComboModel);
+    
+    // Populate faculty combo box
+    List<User> allFaculty = dbManager.getUsersByType(User.UserType.FACULTY);
+    facultyComboModel.addElement("None"); // Option to remove faculty assignment
+    for (User faculty : allFaculty) {
+        facultyComboModel.addElement(faculty.getUsername() + " - " + faculty.getUserInfo("name"));
+    }
+    
+    JButton assignFacultyButton = new JButton("Assign Faculty");
+    
+    JPanel assignFacultyPanel = new JPanel(new BorderLayout());
+    assignFacultyPanel.add(facultyComboBox, BorderLayout.CENTER);
+    assignFacultyPanel.add(assignFacultyButton, BorderLayout.EAST);
+    
+    facultyPanel.add(currentFacultyPanel, BorderLayout.NORTH);
+    facultyPanel.add(assignFacultyPanel, BorderLayout.CENTER);
+    
+    // Add panels to tabbed pane
+    detailsTabbedPane.addTab("Subject Details", subjectDetailsPanel);
+    detailsTabbedPane.addTab("Enrolled Students", enrolledPanel);
+    detailsTabbedPane.addTab("Schedules", schedulesPanel);
+    detailsTabbedPane.addTab("Faculty Assignment", facultyPanel);
+    
+    // Split pane for list and details
+    JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, subjectScrollPane, detailsTabbedPane);
+    splitPane.setDividerLocation(200);
+    panel.add(splitPane, BorderLayout.CENTER);
+    
+    // Move clearFields to be accessible by all action listeners
+    final JTextField finalIdField = idField;
+    final JTextField finalNameField = nameField;
+    final JTextField finalDepartmentField = departmentField;
+    final JTextField finalTuitionField = tuitionField;
+    final JTextField finalSalaryField = salaryField;
+    final JTextField finalUnitsField = unitsField;
+    final JTextArea finalPrerequisitesArea = prerequisitesArea;
+    final DefaultListModel<String> finalEnrolledListModel = enrolledListModel;
+    final DefaultListModel<String> finalScheduleListModel = scheduleListModel;
+    final JTextField finalRoomField = roomField;
+    final JTextField finalStartTimeField = startTimeField;
+    final JTextField finalEndTimeField = endTimeField;
+    final JList<String> finalSubjectList = subjectList;
+    final JLabel finalCurrentFacultyLabel = currentFacultyLabel;
+
     ActionListener clearFieldsAction = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
             clearSubjectFields(finalIdField, finalNameField, finalDepartmentField, finalTuitionField, finalSalaryField, finalUnitsField,  finalPrerequisitesArea, finalEnrolledListModel,   finalScheduleListModel, finalRoomField,   finalStartTimeField, finalEndTimeField, finalSubjectList);
+            finalCurrentFacultyLabel.setText("Current Faculty: None");
         }
     };
-    
+
     clearButton.addActionListener(clearFieldsAction);
-        // Event listeners
-        subjectList.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting() && subjectList.getSelectedValue() != null) {
-                    String subjectId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from the list display
-                    Subject subject = dbManager.getSubject(subjectId);
+    
+    // Event listeners
+    subjectList.addListSelectionListener(new ListSelectionListener() {
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+            if (!e.getValueIsAdjusting() && subjectList.getSelectedValue() != null) {
+                String subjectId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from the list display
+                Subject subject = dbManager.getSubject(subjectId);
+                
+                if (subject != null) {
+                    // Fill subject details
+                    idField.setText(subject.getId());
+                    nameField.setText(subject.getName());
+                    departmentField.setText(subject.getDepartment());
+                    tuitionField.setText(String.valueOf(subject.getTuition()));
+                    salaryField.setText(String.valueOf(subject.getSalary()));
+                    unitsField.setText(String.valueOf(subject.getUnits()));
                     
-                    if (subject != null) {
-                        // Fill subject details
-                        idField.setText(subject.getId());
-                        nameField.setText(subject.getName());
-                        departmentField.setText(subject.getDepartment());
-                        tuitionField.setText(String.valueOf(subject.getTuition()));
-                        salaryField.setText(String.valueOf(subject.getSalary()));
-                        unitsField.setText(String.valueOf(subject.getUnits()));
-                        
-                        StringBuilder prereqs = new StringBuilder();
-                        for (String prereq : subject.getPrerequisites()) {
-                            prereqs.append(prereq).append("\n");
+                    StringBuilder prereqs = new StringBuilder();
+                    for (String prereq : subject.getPrerequisites()) {
+                        prereqs.append(prereq).append("\n");
+                    }
+                    prerequisitesArea.setText(prereqs.toString());
+                    
+                    // Fill enrolled students
+                    enrolledListModel.clear();
+                    for (String student : subject.getEnrolledStudents()) {
+                        User studentUser = dbManager.getUser(student);
+                        if (studentUser != null) {
+                            enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name"));
                         }
-                        prerequisitesArea.setText(prereqs.toString());
-                        
-                        // Fill enrolled students
-                        enrolledListModel.clear();
-                        for (String student : subject.getEnrolledStudents()) {
-                            User studentUser = dbManager.getUser(student);
-                            if (studentUser != null) {
-                                enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name"));
-                            }
+                    }
+                    
+                    // Fill schedules
+                    scheduleListModel.clear();
+                    for (Schedule schedule : subject.getSchedules()) {
+                        scheduleListModel.addElement(schedule.toString());
+                    }
+                    
+                    // Update faculty assignment
+                    String assignedFaculty = subject.getAssignedFaculty();
+                    if (assignedFaculty != null && !assignedFaculty.isEmpty()) {
+                        User faculty = dbManager.getUser(assignedFaculty);
+                        if (faculty != null) {
+                            currentFacultyLabel.setText("Current Faculty: " + assignedFaculty + " - " + faculty.getUserInfo("name"));
+                        } else {
+                            currentFacultyLabel.setText("Current Faculty: " + assignedFaculty);
                         }
-                        
-                        // Fill schedules
-                        scheduleListModel.clear();
-                        for (Schedule schedule : subject.getSchedules()) {
-                            scheduleListModel.addElement(schedule.toString());
-                        }
+                    } else {
+                        currentFacultyLabel.setText("Current Faculty: None");
                     }
                 }
             }
-        });
-        
-        createButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String id = idField.getText().trim();
-                String name = nameField.getText().trim();
-                String department = departmentField.getText().trim();
-                
-                if (id.isEmpty() || name.isEmpty() || department.isEmpty()) {
-                    JOptionPane.showMessageDialog(panel, "Subject ID, name, and department are required", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
+        }
+    });
+    
+    createButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String id = idField.getText().trim();
+            String name = nameField.getText().trim();
+            String department = departmentField.getText().trim();
+            
+            if (id.isEmpty() || name.isEmpty() || department.isEmpty()) {
+                JOptionPane.showMessageDialog(panel, "Subject ID, name, and department are required", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            if (dbManager.getSubject(id) != null) {
+                JOptionPane.showMessageDialog(panel, "Subject ID already exists", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            double tuition = 0;
+            double salary = 0;
+            int units = 0;
+            
+            try {
+                tuition = Double.parseDouble(tuitionField.getText().trim());
+                salary = Double.parseDouble(salaryField.getText().trim());
+                units = Integer.parseInt(unitsField.getText().trim());
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(panel, "Invalid number format for tuition, salary, or units", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            Subject subject = new Subject(id, name, department, tuition, salary, units);
+            
+            // Add prerequisites
+            String[] prereqLines = prerequisitesArea.getText().split("\n");
+            for (String prereq : prereqLines) {
+                prereq = prereq.trim();
+                if (!prereq.isEmpty()) {
+                    subject.addPrerequisite(prereq);
                 }
+            }
+            
+            dbManager.addSubject(subject);
+            refreshSubjectList(subjectListModel);
+            
+            JOptionPane.showMessageDialog(panel, "Subject created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+        }
+    });
+    
+    updateButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (subjectList.getSelectedValue() == null) {
+                JOptionPane.showMessageDialog(panel, "Please select a subject to update", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            String oldId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from the list display
+            String newId = idField.getText().trim();
+            
+            if (!oldId.equals(newId) && dbManager.getSubject(newId) != null) {
+                JOptionPane.showMessageDialog(panel, "Subject ID already exists", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            double tuition = 0;
+            double salary = 0;
+            int units = 0;
+            
+            try {
+                tuition = Double.parseDouble(tuitionField.getText().trim());
+                salary = Double.parseDouble(salaryField.getText().trim());
+                units = Integer.parseInt(unitsField.getText().trim());
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(panel, "Invalid number format for tuition, salary, or units", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            // If ID changed, need to remove old subject and create new one
+            if (!oldId.equals(newId)) {
+                Subject oldSubject = dbManager.getSubject(oldId);
+                dbManager.removeSubject(oldId);
                 
-                if (dbManager.getSubject(id) != null) {
-                    JOptionPane.showMessageDialog(panel, "Subject ID already exists", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
+                Subject newSubject = new Subject(newId, nameField.getText().trim(), departmentField.getText().trim(), tuition, salary, units);
+                
+                // Copy over enrolled students and assigned faculty
+                for (String student : oldSubject.getEnrolledStudents()) {
+                    newSubject.enrollStudent(student);
                 }
+                newSubject.setAssignedFaculty(oldSubject.getAssignedFaculty());
                 
-                double tuition = 0;
-                double salary = 0;
-                int units = 0;
-                
-                try {
-                    tuition = Double.parseDouble(tuitionField.getText().trim());
-                    salary = Double.parseDouble(salaryField.getText().trim());
-                    units = Integer.parseInt(unitsField.getText().trim());
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(panel, "Invalid number format for tuition, salary, or units", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
+                // Copy over schedules
+                for (Schedule schedule : oldSubject.getSchedules()) {
+                    Schedule newSchedule = new Schedule(newId, schedule.getRoomNumber(), schedule.getDayOfWeek(), schedule.getStartTime(), schedule.getEndTime());
+                    newSubject.addSchedule(newSchedule);
                 }
-                
-                Subject subject = new Subject(id, name, department, tuition, salary, units);
                 
                 // Add prerequisites
+                String[] prereqLines = prerequisitesArea.getText().split("\n");
+                for (String prereq : prereqLines) {
+                    prereq = prereq.trim();
+                    if (!prereq.isEmpty()) {
+                        newSubject.addPrerequisite(prereq);
+                    }
+                }
+                
+                dbManager.addSubject(newSubject);
+            } else {
+                Subject subject = dbManager.getSubject(oldId);
+                
+                // Update basic info
+                subject.setTuition(tuition);
+                subject.setSalary(salary);
+                subject.setUnits(units);
+                
+                // Clear and re-add prerequisites
+                subject.getPrerequisites().clear();
                 String[] prereqLines = prerequisitesArea.getText().split("\n");
                 for (String prereq : prereqLines) {
                     prereq = prereq.trim();
@@ -697,146 +851,176 @@ public class AdminInterface extends JFrame {
                     }
                 }
                 
-                dbManager.addSubject(subject);
+                // Update name and department as well
+                subject.setName(nameField.getText().trim());
+                subject.setDepartment(departmentField.getText().trim());
+            }
+            
+            refreshSubjectList(subjectListModel);
+            JOptionPane.showMessageDialog(panel, "Subject updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+        }
+    });
+    
+    deleteButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (subjectList.getSelectedValue() == null) {
+                JOptionPane.showMessageDialog(panel, "Please select a subject to delete", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            String subjectId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from the list display
+            
+            int confirm = JOptionPane.showConfirmDialog(panel, 
+                "Are you sure you want to delete subject '" + subjectId + "'?", 
+                "Confirm Deletion", 
+                JOptionPane.YES_NO_OPTION);
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                dbManager.removeSubject(subjectId);
                 refreshSubjectList(subjectListModel);
-                
-                JOptionPane.showMessageDialog(panel, "Subject created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(panel, "Subject deleted successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
-        });
-        
-        updateButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (subjectList.getSelectedValue() == null) {
-                    JOptionPane.showMessageDialog(panel, "Please select a subject to update", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                
-                String oldId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from the list display
-                String newId = idField.getText().trim();
-                
-                if (!oldId.equals(newId) && dbManager.getSubject(newId) != null) {
-                    JOptionPane.showMessageDialog(panel, "Subject ID already exists", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                
-                double tuition = 0;
-                double salary = 0;
-                int units = 0;
-                
-                try {
-                    tuition = Double.parseDouble(tuitionField.getText().trim());
-                    salary = Double.parseDouble(salaryField.getText().trim());
-                    units = Integer.parseInt(unitsField.getText().trim());
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(panel, "Invalid number format for tuition, salary, or units", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                
-                // If ID changed, need to remove old subject and create new one
-                if (!oldId.equals(newId)) {
-                    Subject oldSubject = dbManager.getSubject(oldId);
-                    dbManager.removeSubject(oldId);
-                    
-                    Subject newSubject = new Subject(newId, nameField.getText().trim(), departmentField.getText().trim(), tuition, salary, units);
-                    
-                    // Copy over enrolled students and assigned faculty
-                    for (String student : oldSubject.getEnrolledStudents()) {
-                        newSubject.enrollStudent(student);
-                    }
-                    newSubject.setAssignedFaculty(oldSubject.getAssignedFaculty());
-                    
-                    // Copy over schedules
-                    for (Schedule schedule : oldSubject.getSchedules()) {
-                        Schedule newSchedule = new Schedule(newId, schedule.getRoomNumber(), schedule.getDayOfWeek(), schedule.getStartTime(), schedule.getEndTime());
-                        newSubject.addSchedule(newSchedule);
-                    }
-                    
-                    // Add prerequisites
-                    String[] prereqLines = prerequisitesArea.getText().split("\n");
-                    for (String prereq : prereqLines) {
-                        prereq = prereq.trim();
-                        if (!prereq.isEmpty()) {
-                            newSubject.addPrerequisite(prereq);
-                        }
-                    }
-                    
-                    dbManager.addSubject(newSubject);
-                } else {
-                    Subject subject = dbManager.getSubject(oldId);
-                    
-                    // Update basic info
-                    subject.setTuition(tuition);
-                    subject.setSalary(salary);
-                    
-                    // Clear and re-add prerequisites
-                    subject.getPrerequisites().clear();
-                    String[] prereqLines = prerequisitesArea.getText().split("\n");
-                    for (String prereq : prereqLines) {
-                        prereq = prereq.trim();
-                        if (!prereq.isEmpty()) {
-                            subject.addPrerequisite(prereq);
-                        }
-                    }
-                    
-                    // Update name and department as well
-                    subject.setName(nameField.getText().trim());
-                    subject.setDepartment(departmentField.getText().trim());
-                }
-                
-                refreshSubjectList(subjectListModel);
-                JOptionPane.showMessageDialog(panel, "Subject updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+        }
+    });
+    
+    // Force enroll student
+    enrollButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (subjectList.getSelectedValue() == null) {
+                JOptionPane.showMessageDialog(panel, "Please select a subject first", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
             }
-        });
-        
-        deleteButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (subjectList.getSelectedValue() == null) {
-                    JOptionPane.showMessageDialog(panel, "Please select a subject to delete", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                
-                String subjectId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from the list display
-                
-                int confirm = JOptionPane.showConfirmDialog(panel, 
-                    "Are you sure you want to delete subject '" + subjectId + "'?", 
-                    "Confirm Deletion", 
-                    JOptionPane.YES_NO_OPTION);
-                
-                if (confirm == JOptionPane.YES_OPTION) {
-                    dbManager.removeSubject(subjectId);
-                    refreshSubjectList(subjectListModel);
-                    JOptionPane.showMessageDialog(panel, "Subject deleted successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+            
+            if (studentComboBox.getSelectedItem() == null) {
+                JOptionPane.showMessageDialog(panel, "Please select a student to enroll", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            String subjectId = subjectList.getSelectedValue().split(" ")[0];
+            Subject subject = dbManager.getSubject(subjectId);
+            
+            String studentEntry = (String) studentComboBox.getSelectedItem();
+            String studentUsername = studentEntry.split(" - ")[0];
+            
+            // Check if student is already enrolled
+            if (subject.getEnrolledStudents().contains(studentUsername)) {
+                JOptionPane.showMessageDialog(panel, "Student is already enrolled in this subject", "Information", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            
+            // Force enroll student (no prerequisite checking)
+            subject.enrollStudent(studentUsername);
+            
+            // Refresh enrolled students list
+            enrolledListModel.clear();
+            for (String student : subject.getEnrolledStudents()) {
+                User studentUser = dbManager.getUser(student);
+                if (studentUser != null) {
+                    enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name"));
                 }
             }
-        });
-        
-        
-        // Schedule management
-        addScheduleButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (subjectList.getSelectedValue() == null) {
-                    JOptionPane.showMessageDialog(panel, "Please select a subject first", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
+            
+            JOptionPane.showMessageDialog(panel, "Student forcibly enrolled successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+        }
+    });
+    
+    // Unenroll student
+    unenrollButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (subjectList.getSelectedValue() == null) {
+                JOptionPane.showMessageDialog(panel, "Please select a subject first", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            if (enrolledList.getSelectedValue() == null) {
+                JOptionPane.showMessageDialog(panel, "Please select a student to unenroll", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            String subjectId = subjectList.getSelectedValue().split(" ")[0];
+            Subject subject = dbManager.getSubject(subjectId);
+            
+            String studentEntry = enrolledList.getSelectedValue();
+            String studentUsername = studentEntry.split(" - ")[0];
+            
+            // Unenroll student
+            subject.unenrollStudent(studentUsername);
+            
+            // Refresh enrolled students list
+            enrolledListModel.clear();
+            for (String student : subject.getEnrolledStudents()) {
+                User studentUser = dbManager.getUser(student);
+                if (studentUser != null) {
+                    enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name"));
                 }
-                
-                String subjectId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from the list display
-                Subject subject = dbManager.getSubject(subjectId);
-                
-                String room = roomField.getText().trim();
-                String day = (String) dayComboBox.getSelectedItem();
-                String startTime = startTimeField.getText().trim();
-                String endTime = endTimeField.getText().trim();
-                
-                if (room.isEmpty() || startTime.isEmpty() || endTime.isEmpty()) {
-                    JOptionPane.showMessageDialog(panel, "Room, start time, and end time are required", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                
-                Schedule schedule = new Schedule(subjectId, room, day, startTime, endTime);
-                subject.addSchedule(schedule);
+            }
+            
+            JOptionPane.showMessageDialog(panel, "Student unenrolled successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+        }
+    });
+    
+    // Schedule management
+    addScheduleButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (subjectList.getSelectedValue() == null) {
+                JOptionPane.showMessageDialog(panel, "Please select a subject first", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            String subjectId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from the list display
+            Subject subject = dbManager.getSubject(subjectId);
+            
+            String room = roomField.getText().trim();
+            String day = (String) dayComboBox.getSelectedItem();
+            String startTime = startTimeField.getText().trim();
+            String endTime = endTimeField.getText().trim();
+            
+            if (room.isEmpty() || startTime.isEmpty() || endTime.isEmpty()) {
+                JOptionPane.showMessageDialog(panel, "Room, start time, and end time are required", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            Schedule schedule = new Schedule(subjectId, room, day, startTime, endTime);
+            subject.addSchedule(schedule);
+            
+            // Refresh schedule list
+            scheduleListModel.clear();
+            for (Schedule s : subject.getSchedules()) {
+                scheduleListModel.addElement(s.toString());
+            }
+            
+            // Clear fields
+            roomField.setText("");
+            startTimeField.setText("");
+            endTimeField.setText("");
+            
+            JOptionPane.showMessageDialog(panel, "Schedule added successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+        }
+    });
+    
+    removeScheduleButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (subjectList.getSelectedValue() == null) {
+                JOptionPane.showMessageDialog(panel, "Please select a subject first", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            if (scheduleList.getSelectedValue() == null) {
+                JOptionPane.showMessageDialog(panel, "Please select a schedule to remove", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            String subjectId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from the list display
+            Subject subject = dbManager.getSubject(subjectId);
+            
+            int selectedIndex = scheduleList.getSelectedIndex();
+            if (selectedIndex >= 0 && selectedIndex < subject.getSchedules().size()) {
+                subject.removeSchedule(subject.getSchedules().get(selectedIndex));
                 
                 // Refresh schedule list
                 scheduleListModel.clear();
@@ -844,59 +1028,52 @@ public class AdminInterface extends JFrame {
                     scheduleListModel.addElement(s.toString());
                 }
                 
-                // Clear fields
-                roomField.setText("");
-                startTimeField.setText("");
-                endTimeField.setText("");
-                
-                JOptionPane.showMessageDialog(panel, "Schedule added successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(panel, "Schedule removed successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
-        });
-        
-        removeScheduleButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (subjectList.getSelectedValue() == null) {
-                    JOptionPane.showMessageDialog(panel, "Please select a subject first", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                
-                if (scheduleList.getSelectedValue() == null) {
-                    JOptionPane.showMessageDialog(panel, "Please select a schedule to remove", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                
-                String subjectId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from the list display
-                Subject subject = dbManager.getSubject(subjectId);
-                
-                int selectedIndex = scheduleList.getSelectedIndex();
-                if (selectedIndex >= 0 && selectedIndex < subject.getSchedules().size()) {
-                    subject.removeSchedule(subject.getSchedules().get(selectedIndex));
-                    
-                    // Refresh schedule list
-                    scheduleListModel.clear();
-                    for (Schedule s : subject.getSchedules()) {
-                        scheduleListModel.addElement(s.toString());
-                    }
-                    
-                    JOptionPane.showMessageDialog(panel, "Schedule removed successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
-                }
+        }
+    });
+    
+    clearScheduleButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            roomField.setText("");
+            startTimeField.setText("");
+            endTimeField.setText("");
+            scheduleList.clearSelection();
+        }
+    });
+    
+    // Faculty assignment
+    assignFacultyButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (subjectList.getSelectedValue() == null) {
+                JOptionPane.showMessageDialog(panel, "Please select a subject first", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
             }
-        });
-        
-        clearScheduleButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                roomField.setText("");
-                startTimeField.setText("");
-                endTimeField.setText("");
-                scheduleList.clearSelection();
+            
+            String subjectId = subjectList.getSelectedValue().split(" ")[0];
+            Subject subject = dbManager.getSubject(subjectId);
+            
+            String facultyEntry = (String) facultyComboBox.getSelectedItem();
+            
+            if (facultyEntry.equals("None")) {
+                // Remove faculty assignment
+                subject.setAssignedFaculty(null);
+                currentFacultyLabel.setText("Current Faculty: None");
+                JOptionPane.showMessageDialog(panel, "Faculty assignment removed", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                // Assign new faculty
+                String facultyUsername = facultyEntry.split(" - ")[0];
+                subject.setAssignedFaculty(facultyUsername);
+                currentFacultyLabel.setText("Current Faculty: " + facultyEntry);
+                JOptionPane.showMessageDialog(panel, "Faculty assigned successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
-        });
-        
-        
-        return panel;
-    }
+        }
+    });
+    
+    return panel;
+}
     
     //  helper method clear of createSubjectPanel()
     private void clearSubjectFields(JTextField idField, JTextField nameField,  JTextField departmentField, JTextField tuitionField, JTextField salaryField, JTextField unitsField,  JTextArea prerequisitesArea, DefaultListModel<String> enrolledListModel,  DefaultListModel<String> scheduleListModel, JTextField roomField,  JTextField startTimeField, JTextField endTimeField,  JList<String> subjectList) {
