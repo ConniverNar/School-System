@@ -79,14 +79,43 @@ public class FacultyInterface extends JFrame {
     
     // Save schedule assignment to database
     private void saveScheduleAssignment(String subjectId, int scheduleIndex, String facultyUsername) {
-        // This would save to database - for now we'll just update our local map
         String key = subjectId + "_" + scheduleIndex;
         if (facultyUsername == null) {
             scheduleAssignments.remove(key);
             dbManager.removeScheduleAssignment(subjectId, scheduleIndex);
+            // Also remove from facultyScheduleAssignments list
+            // Need to find the faculty username who had this assignment before removal
+            // Since we removed from scheduleAssignments map, we can no longer get it here
+            // So we must find the assignment by subjectId and scheduleIndex in facultyScheduleAssignments
+            List<FacultyScheduleAssignment> assignments = dbManager.getFacultyScheduleAssignmentsBySubject(subjectId);
+            FacultyScheduleAssignment toRemove = null;
+            for (FacultyScheduleAssignment assignment : assignments) {
+                if (assignment.getSchedule().toString().equals(subjectId + "_" + scheduleIndex)) {
+                    toRemove = assignment;
+                    break;
+                }
+            }
+            if (toRemove != null) {
+                dbManager.removeFacultyScheduleAssignment(subjectId, toRemove.getFacultyUsername(), toRemove.getSchedule());
+            }
         } else {
             scheduleAssignments.put(key, facultyUsername);
             dbManager.assignScheduleToFaculty(subjectId, scheduleIndex, facultyUsername);
+            // Also add to facultyScheduleAssignments list
+            Subject subject = dbManager.getSubject(subjectId);
+            if (subject != null) {
+                Schedule schedule = null;
+                for (Schedule s : subject.getSchedules()) {
+                    if (s.toString().equals(subjectId + "_" + scheduleIndex)) {
+                        schedule = s;
+                        break;
+                    }
+                }
+                if (schedule != null) {
+                    FacultyScheduleAssignment assignment = new FacultyScheduleAssignment(subjectId, facultyUsername, schedule);
+                    dbManager.addFacultyScheduleAssignment(assignment);
+                }
+            }
         }
     }
     
@@ -496,7 +525,7 @@ public class FacultyInterface extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         
         // Table for salary breakdown
-        String[] columnNames = {"Subject ID", "Subject Name", "Schedules", "Salary per Schedule", "Total"};
+        String[] columnNames = {"Subject ID", "Subject Name", "Schedule", "Salary"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -546,7 +575,7 @@ public class FacultyInterface extends JFrame {
     private void refreshSalaryInfo(DefaultTableModel model, JLabel baseSalaryLabel, 
                                JLabel subjectSalaryLabel, JLabel totalSalaryLabel) {
         model.setRowCount(0);
-        List<Subject> allSubjects = dbManager.getAllSubjects();
+        List<FacultyScheduleAssignment> assignments = dbManager.getFacultyScheduleAssignmentsByFaculty(facultyUser.getUsername());
         
         // Get base salary from user info
         String baseSalaryStr = facultyUser.getUserInfo("baseSalary");
@@ -561,33 +590,20 @@ public class FacultyInterface extends JFrame {
         
         double totalSubjectSalary = 0;
         
-        // Process each subject
-        for (Subject subject : allSubjects) {
-            int assignedSchedulesCount = 0;
+        for (FacultyScheduleAssignment assignment : assignments) {
+            Subject subject = dbManager.getSubject(assignment.getSubjectId());
+            if (subject == null) continue;
+            Schedule schedule = assignment.getSchedule();
+            double salaryPerSchedule = subject.getSalary() / subject.getSchedules().size();
             
-            // Count assigned schedules for this subject
-            for (int i = 0; i < subject.getSchedules().size(); i++) {
-                String assignedFaculty = getScheduleAssignedFaculty(subject.getId(), i);
-                if (assignedFaculty != null && assignedFaculty.equals(facultyUser.getUsername())) {
-                    assignedSchedulesCount++;
-                }
-            }
+            model.addRow(new Object[]{
+                subject.getId(),
+                subject.getName(),
+                schedule.toString(),
+                String.format("₱%.2f", salaryPerSchedule)
+            });
             
-            if (assignedSchedulesCount > 0) {
-                // Calculate salary based on number of assigned schedules
-                double salaryPerSchedule = subject.getSalary() / subject.getSchedules().size();
-                double totalSubjectSalaryForThisFaculty = salaryPerSchedule * assignedSchedulesCount;
-                
-                model.addRow(new Object[]{
-                    subject.getId(),
-                    subject.getName(),
-                    assignedSchedulesCount,
-                    String.format("₱%.2f", salaryPerSchedule),
-                    String.format("₱%.2f", totalSubjectSalaryForThisFaculty)
-                });
-                
-                totalSubjectSalary += totalSubjectSalaryForThisFaculty;
-            }
+            totalSubjectSalary += salaryPerSchedule;
         }
         
         // Update labels

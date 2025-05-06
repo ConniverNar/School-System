@@ -6,6 +6,18 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.*;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 
 public class AdminInterface extends JFrame {
@@ -16,6 +28,10 @@ public class AdminInterface extends JFrame {
     public AdminInterface(DatabaseManager dbManager, User adminUser) {
         this.dbManager = dbManager;
         this.adminUser = adminUser;
+        
+        // Fix faculty-subject assignments on startup
+        SubjectAssignmentFix assignmentFix = new SubjectAssignmentFix(dbManager);
+        assignmentFix.verifyFacultySubjectAssignments();
         
         setTitle("Admin Interface - " + adminUser.getUserInfo("name"));
         setSize(800, 600);
@@ -53,6 +69,455 @@ public class AdminInterface extends JFrame {
         setVisible(true);
     }
     
+    private JPanel createTuitionPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        
+        DefaultListModel<String> studentListModel = new DefaultListModel<>();
+        JList<String> studentList = new JList<>(studentListModel);
+        JScrollPane studentScrollPane = new JScrollPane(studentList);
+        studentScrollPane.setBorder(BorderFactory.createTitledBorder("Student List"));
+        
+        refreshStudentList(studentListModel);
+        
+        JPanel detailsPanel = new JPanel(new BorderLayout());
+        detailsPanel.setBorder(BorderFactory.createTitledBorder("Tuition Details"));
+        
+        String[] columnNames = {"Subject ID", "Subject Name", "Tuition"};
+        DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0);
+        JTable subjectsTable = new JTable(tableModel);
+        JScrollPane tableScrollPane = new JScrollPane(subjectsTable);
+        
+        JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JLabel totalLabel = new JLabel("Total Tuition: ₱0.00");
+        totalLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        summaryPanel.add(totalLabel);
+        
+        detailsPanel.add(tableScrollPane, BorderLayout.CENTER);
+        detailsPanel.add(summaryPanel, BorderLayout.SOUTH);
+        
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, studentScrollPane, detailsPanel);
+        splitPane.setDividerLocation(200);
+        panel.add(splitPane, BorderLayout.CENTER);
+        
+        studentList.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (!e.getValueIsAdjusting() && studentList.getSelectedValue() != null) {
+                    String username = studentList.getSelectedValue();
+                    User student = dbManager.getUser(username);
+                    
+                    if (student != null) {
+                        tableModel.setRowCount(0);
+                        List<Subject> enrolledSubjects = dbManager.getEnrolledSubjects(username);
+                        double totalTuition = 0;
+                        
+                        for (Subject subject : enrolledSubjects) {
+                            tableModel.addRow(new Object[]{
+                                subject.getId(),
+                                subject.getName(),
+                                String.format("₱%.2f", subject.getTuition())
+                            });
+                            totalTuition += subject.getTuition();
+                        }
+                        totalLabel.setText(String.format("Total Tuition: ₱%.2f", totalTuition));
+                    }
+                }
+            }
+        });
+        
+        return panel;
+    }
+    
+    private JPanel createSalaryPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        
+        DefaultListModel<String> facultyListModel = new DefaultListModel<>();
+        JList<String> facultyList = new JList<>(facultyListModel);
+        JScrollPane facultyScrollPane = new JScrollPane(facultyList);
+        facultyScrollPane.setBorder(BorderFactory.createTitledBorder("Faculty List"));
+        
+        List<User> faculty = dbManager.getUsersByType(User.UserType.FACULTY);
+        for (User facultyMember : faculty) {
+            facultyListModel.addElement(facultyMember.getUsername());
+        }
+        
+        JPanel detailsPanel = new JPanel(new BorderLayout());
+        detailsPanel.setBorder(BorderFactory.createTitledBorder("Salary Details"));
+        
+        // Create tabbed pane for subject listings and assignments
+        JTabbedPane assignmentTabs = new JTabbedPane();
+        
+        // Tab for current subject assignments
+        JPanel currentAssignmentsPanel = new JPanel(new BorderLayout());
+        String[] columnNames = {"Subject ID", "Subject Name", "Schedule", "Salary"};
+        DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        JTable subjectsTable = new JTable(tableModel);
+        JScrollPane tableScrollPane = new JScrollPane(subjectsTable);
+        
+        subjectsTable.getColumnModel().getColumn(0).setPreferredWidth(80);
+        subjectsTable.getColumnModel().getColumn(1).setPreferredWidth(200);
+        subjectsTable.getColumnModel().getColumn(2).setPreferredWidth(180);
+        subjectsTable.getColumnModel().getColumn(3).setPreferredWidth(100);
+        
+        currentAssignmentsPanel.add(tableScrollPane, BorderLayout.CENTER);
+        
+        // Tab for available schedules to assign
+        JPanel assignSchedulePanel = new JPanel(new BorderLayout());
+        
+        JComboBox<String> subjectComboBox = new JComboBox<>();
+        DefaultListModel<String> scheduleListModel = new DefaultListModel<>();
+        JList<String> scheduleList = new JList<>(scheduleListModel);
+        JScrollPane scheduleScrollPane = new JScrollPane(scheduleList);
+        
+        JPanel scheduleSelectionPanel = new JPanel(new BorderLayout());
+        scheduleSelectionPanel.add(new JLabel("Select Subject:"), BorderLayout.NORTH);
+        scheduleSelectionPanel.add(subjectComboBox, BorderLayout.CENTER);
+        
+        JPanel scheduleDisplayPanel = new JPanel(new BorderLayout());
+        scheduleDisplayPanel.add(new JLabel("Available Schedules:"), BorderLayout.NORTH);
+        scheduleDisplayPanel.add(scheduleScrollPane, BorderLayout.CENTER);
+        
+        JButton assignButton = new JButton("Assign Selected Schedule");
+        JPanel assignButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        assignButtonPanel.add(assignButton);
+        
+        assignSchedulePanel.add(scheduleSelectionPanel, BorderLayout.NORTH);
+        assignSchedulePanel.add(scheduleDisplayPanel, BorderLayout.CENTER);
+        assignSchedulePanel.add(assignButtonPanel, BorderLayout.SOUTH);
+        
+        // Add tabs
+        assignmentTabs.addTab("Current Assignments", currentAssignmentsPanel);
+        assignmentTabs.addTab("Assign New Schedule", assignSchedulePanel);
+        
+        detailsPanel.add(assignmentTabs, BorderLayout.CENTER);
+        
+        // Summary panel for totals
+        JPanel summaryPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+        summaryPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        JLabel baseSalaryLabel = new JLabel("Base Salary:");
+        JTextField baseSalaryField = new JTextField("0.00");
+        JLabel totalSubjectsLabel = new JLabel("Total from Subjects:");
+        JLabel totalSubjectsValueLabel = new JLabel("₱0.00");
+        JLabel grandTotalLabel = new JLabel("Grand Total:");
+        JLabel grandTotalValueLabel = new JLabel("₱0.00");
+        
+        summaryPanel.add(baseSalaryLabel);
+        summaryPanel.add(baseSalaryField);
+        summaryPanel.add(totalSubjectsLabel);
+        summaryPanel.add(totalSubjectsValueLabel);
+        summaryPanel.add(grandTotalLabel);
+        summaryPanel.add(grandTotalValueLabel);
+        
+        JButton updateButton = new JButton("Update Base Salary");
+        JButton removeAssignmentButton = new JButton("Remove Selected Assignment");
+        
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.add(updateButton);
+        buttonPanel.add(removeAssignmentButton);
+        
+        JPanel controlPanel = new JPanel(new BorderLayout());
+        controlPanel.add(summaryPanel, BorderLayout.CENTER);
+        controlPanel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        detailsPanel.add(controlPanel, BorderLayout.SOUTH);
+        
+        JPanel statusPanel = new JPanel(new BorderLayout());
+        JLabel statusLabel = new JLabel("Base Salary: ₱0.00    Subject Salary: ₱0.00    Total Salary: ₱0.00");
+        statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        statusPanel.add(statusLabel, BorderLayout.WEST);
+        
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, facultyScrollPane, detailsPanel);
+        splitPane.setDividerLocation(200);
+        
+        panel.add(splitPane, BorderLayout.CENTER);
+        panel.add(statusPanel, BorderLayout.SOUTH);
+        
+        // Populate subjects dropdown
+        List<Subject> allSubjects = dbManager.getAllSubjects();
+        for (Subject subject : allSubjects) {
+            subjectComboBox.addItem(subject.getId() + " - " + subject.getName());
+        }
+        
+        // Handle faculty selection
+        facultyList.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (!e.getValueIsAdjusting() && facultyList.getSelectedValue() != null) {
+                    String username = facultyList.getSelectedValue();
+                    User facultyMember = dbManager.getUser(username);
+                    
+                    if (facultyMember != null) {
+                        // Clear and populate the assignments table
+                        tableModel.setRowCount(0);
+                        
+                        // Get base salary
+                        String baseSalaryStr = facultyMember.getUserInfo("baseSalary");
+                        double baseSalary = 0;
+                        if (baseSalaryStr != null && !baseSalaryStr.isEmpty()) {
+                            try {
+                                baseSalary = Double.parseDouble(baseSalaryStr);
+                            } catch (NumberFormatException ex) {
+                                baseSalary = 0;
+                            }
+                        }
+                        baseSalaryField.setText(String.format("%.2f", baseSalary));
+                        
+                        // Get assigned schedules for this faculty
+                        List<FacultyScheduleAssignment> assignments = dbManager.getFacultyScheduleAssignmentsByFaculty(username);
+                        double totalSubjectsSalary = 0;
+                        
+                        for (FacultyScheduleAssignment assignment : assignments) {
+                            Subject subject = dbManager.getSubject(assignment.getSubjectId());
+                            if (subject != null) {
+                                tableModel.addRow(new Object[]{
+                                    subject.getId(),
+                                    subject.getName(),
+                                    assignment.getSchedule().toString(),
+                                    String.format("₱%.2f", subject.getSalary())
+                                });
+                                totalSubjectsSalary += subject.getSalary();
+                            }
+                        }
+                        
+                        totalSubjectsValueLabel.setText(String.format("₱%.2f", totalSubjectsSalary));
+                        grandTotalValueLabel.setText(String.format("₱%.2f", baseSalary + totalSubjectsSalary));
+                        
+                        statusLabel.setText(String.format("Base Salary: ₱%.2f    Subject Salary: ₱%.2f    Total Salary: ₱%.2f", 
+                                           baseSalary, totalSubjectsSalary, baseSalary + totalSubjectsSalary));
+                    }
+                }
+            }
+        });
+        
+        // Handle subject selection for available schedules
+        subjectComboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                scheduleListModel.clear();
+                if (subjectComboBox.getSelectedItem() != null) {
+                    String subjectId = ((String)subjectComboBox.getSelectedItem()).split(" - ")[0];
+                    Subject subject = dbManager.getSubject(subjectId);
+                    if (subject != null) {
+                        for (Schedule schedule : subject.getSchedules()) {
+                            // Check if this schedule is already assigned to any faculty
+                            if (!dbManager.isScheduleAssignedToFaculty(subjectId, schedule)) {
+                                scheduleListModel.addElement(schedule.toString());
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Handle assignment button
+        assignButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String facultyUsername = facultyList.getSelectedValue();
+                if (facultyUsername == null) {
+                    JOptionPane.showMessageDialog(panel, "Please select a faculty member first", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                if (subjectComboBox.getSelectedItem() == null) {
+                    JOptionPane.showMessageDialog(panel, "Please select a subject", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                String selectedSchedule = scheduleList.getSelectedValue();
+                if (selectedSchedule == null) {
+                    JOptionPane.showMessageDialog(panel, "Please select a schedule to assign", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                String subjectId = ((String)subjectComboBox.getSelectedItem()).split(" - ")[0];
+                Subject subject = dbManager.getSubject(subjectId);
+                
+                if (subject != null) {
+                    // Find the schedule object that matches the selected string
+                    Schedule selectedScheduleObj = null;
+                    for (Schedule schedule : subject.getSchedules()) {
+                        if (schedule.toString().equals(selectedSchedule)) {
+                            selectedScheduleObj = schedule;
+                            break;
+                        }
+                    }
+                    
+                    if (selectedScheduleObj != null) {
+                        // Create and add the assignment
+                        FacultyScheduleAssignment assignment = new FacultyScheduleAssignment(
+                            subjectId, facultyUsername, selectedScheduleObj);
+                        dbManager.addFacultyScheduleAssignment(assignment);
+                        
+                        // Refresh the assignments table
+                        tableModel.setRowCount(0);
+                        List<FacultyScheduleAssignment> assignments = dbManager.getFacultyScheduleAssignmentsByFaculty(facultyUsername);
+                        double totalSubjectsSalary = 0;
+                        
+                        for (FacultyScheduleAssignment a : assignments) {
+                            Subject s = dbManager.getSubject(a.getSubjectId());
+                            if (s != null) {
+                                tableModel.addRow(new Object[]{
+                                    s.getId(),
+                                    s.getName(),
+                                    a.getSchedule().toString(),
+                                    String.format("₱%.2f", s.getSalary())
+                                });
+                                totalSubjectsSalary += s.getSalary();
+                            }
+                        }
+                        
+                        // Update totals
+                        double baseSalary = Double.parseDouble(baseSalaryField.getText().trim());
+                        totalSubjectsValueLabel.setText(String.format("₱%.2f", totalSubjectsSalary));
+                        grandTotalValueLabel.setText(String.format("₱%.2f", baseSalary + totalSubjectsSalary));
+                        
+                        statusLabel.setText(String.format("Base Salary: ₱%.2f    Subject Salary: ₱%.2f    Total Salary: ₱%.2f", 
+                                           baseSalary, totalSubjectsSalary, baseSalary + totalSubjectsSalary));
+                        
+                        // Refresh available schedules
+                        subjectComboBox.setSelectedItem(subjectComboBox.getSelectedItem()); // Trigger refresh
+                        
+                        JOptionPane.showMessageDialog(panel, "Schedule assigned successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                }
+            }
+        });
+        
+        // Handle remove assignment button
+        removeAssignmentButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String facultyUsername = facultyList.getSelectedValue();
+                if (facultyUsername == null) {
+                    JOptionPane.showMessageDialog(panel, "Please select a faculty member first", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                int selectedRow = subjectsTable.getSelectedRow();
+                if (selectedRow == -1) {
+                    JOptionPane.showMessageDialog(panel, "Please select an assignment to remove", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                String subjectId = (String) tableModel.getValueAt(selectedRow, 0);
+                String scheduleStr = (String) tableModel.getValueAt(selectedRow, 2);
+                
+                Subject subject = dbManager.getSubject(subjectId);
+                if (subject != null) {
+                    // Find the matching schedule
+                    Schedule selectedSchedule = null;
+                    for (Schedule schedule : subject.getSchedules()) {
+                        if (schedule.toString().equals(scheduleStr)) {
+                            selectedSchedule = schedule;
+                            break;
+                        }
+                    }
+                    
+                    if (selectedSchedule != null) {
+                        // Remove the assignment
+                        dbManager.removeFacultyScheduleAssignment(subjectId, facultyUsername, selectedSchedule);
+                        
+                        // Refresh the table
+                        tableModel.removeRow(selectedRow);
+                        
+                        // Update totals
+                        List<FacultyScheduleAssignment> assignments = dbManager.getFacultyScheduleAssignmentsByFaculty(facultyUsername);
+                        double totalSubjectsSalary = 0;
+                        
+                        for (FacultyScheduleAssignment a : assignments) {
+                            Subject s = dbManager.getSubject(a.getSubjectId());
+                            if (s != null) {
+                                totalSubjectsSalary += s.getSalary();
+                            }
+                        }
+                        
+                        double baseSalary = Double.parseDouble(baseSalaryField.getText().trim());
+                        totalSubjectsValueLabel.setText(String.format("₱%.2f", totalSubjectsSalary));
+                        grandTotalValueLabel.setText(String.format("₱%.2f", baseSalary + totalSubjectsSalary));
+                        
+                        statusLabel.setText(String.format("Base Salary: ₱%.2f    Subject Salary: ₱%.2f    Total Salary: ₱%.2f", 
+                                           baseSalary, totalSubjectsSalary, baseSalary + totalSubjectsSalary));
+                        
+                        JOptionPane.showMessageDialog(panel, "Assignment removed successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                }
+            }
+        });
+        
+        // Handle base salary update
+        updateButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (facultyList.getSelectedValue() == null) {
+                    JOptionPane.showMessageDialog(panel, "Please select a faculty member first", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                String username = facultyList.getSelectedValue();
+                User facultyMember = dbManager.getUser(username);
+                
+                try {
+                    double baseSalary = Double.parseDouble(baseSalaryField.getText().trim());
+                    facultyMember.setUserInfo("baseSalary", String.valueOf(baseSalary));
+                    
+                    double totalSubjectsSalary = Double.parseDouble(totalSubjectsValueLabel.getText().replace("₱", ""));
+                    grandTotalValueLabel.setText(String.format("₱%.2f", baseSalary + totalSubjectsSalary));
+                    
+                    statusLabel.setText(String.format("Base Salary: ₱%.2f    Subject Salary: ₱%.2f    Total Salary: ₱%.2f", 
+                                       baseSalary, totalSubjectsSalary, baseSalary + totalSubjectsSalary));
+                    
+                    JOptionPane.showMessageDialog(panel, "Base salary updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(panel, "Invalid base salary format", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+        
+        return panel;
+    }
+    
+    private void clearFacultyFields(JTextField usernameField, JPasswordField passwordField, JTextField nameField, JTextField ageField, JComboBox<String> genderComboBox, JTextField departmentField, JList<String> facultyList) {
+        usernameField.setText("");
+        passwordField.setText("");
+        nameField.setText("");
+        ageField.setText("");
+        genderComboBox.setSelectedIndex(0);
+        departmentField.setText("");
+        facultyList.clearSelection();
+    }
+    
+    private void clearSubjectFields(JTextField idField, JTextField nameField, JTextField departmentField, JTextField tuitionField, JTextField salaryField, JTextField unitsField, JTextArea prerequisitesArea, DefaultListModel<String> enrolledListModel, DefaultListModel<String> scheduleListModel, JTextField roomField, JTextField startTimeField, JTextField endTimeField, JList<String> subjectList) {
+        idField.setText("");
+        nameField.setText("");
+        departmentField.setText("");
+        tuitionField.setText("");
+        salaryField.setText("");
+        unitsField.setText("");
+        prerequisitesArea.setText("");
+        enrolledListModel.clear();
+        scheduleListModel.clear();
+        roomField.setText("");
+        startTimeField.setText("");
+        endTimeField.setText("");
+        subjectList.clearSelection();
+    }
+    
+    private void refreshSubjectList(DefaultListModel<String> model) {
+        model.clear();
+        List<Subject> subjects = dbManager.getAllSubjects();
+        for (Subject subject : subjects) {
+            model.addElement(subject.getId() + " - " + subject.getName());
+        }
+    }
+    
+
     // Student Management Panel
     private JPanel createStudentPanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -890,245 +1355,6 @@ public class AdminInterface extends JFrame {
             }
         });
         
-        
-        return panel;
-    }
-    
-    //  helper method clear of createSubjectPanel()
-    private void clearSubjectFields(JTextField idField, JTextField nameField,  JTextField departmentField, JTextField tuitionField, JTextField salaryField, JTextField unitsField,  JTextArea prerequisitesArea, DefaultListModel<String> enrolledListModel,  DefaultListModel<String> scheduleListModel, JTextField roomField,  JTextField startTimeField, JTextField endTimeField,  JList<String> subjectList) {
-    idField.setText("");
-    nameField.setText("");
-    departmentField.setText("");
-    tuitionField.setText("");
-    salaryField.setText("");
-    unitsField.setText("");
-    prerequisitesArea.setText("");
-    enrolledListModel.clear();
-    scheduleListModel.clear();
-    roomField.setText("");
-    startTimeField.setText("");
-    endTimeField.setText("");
-    subjectList.clearSelection();
-    }
-
-    // helper method clear of createFacultyPanel()
-    private void clearFacultyFields(JTextField usernameField, JPasswordField passwordField, JTextField nameField, JTextField ageField, JComboBox<String> genderComboBox, JTextField departmentField, JList<String> facultyList) {
-    usernameField.setText("");
-    passwordField.setText("");
-    nameField.setText("");
-    ageField.setText("");
-    genderComboBox.setSelectedIndex(0);
-    departmentField.setText("");
-    facultyList.clearSelection();
-    }
-
-    // Helper method to refresh subject list
-    private void refreshSubjectList(DefaultListModel<String> model) {
-        model.clear();
-        List<Subject> subjects = dbManager.getAllSubjects();
-        for (Subject subject : subjects) {
-            model.addElement(subject.getId() + " - " + subject.getName());
-        }
-    }
-    
-    // Tuition Management Panel
-    private JPanel createTuitionPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        
-        // Student list on the left
-        DefaultListModel<String> studentListModel = new DefaultListModel<>();
-        JList<String> studentList = new JList<>(studentListModel);
-        JScrollPane studentScrollPane = new JScrollPane(studentList);
-        studentScrollPane.setBorder(BorderFactory.createTitledBorder("Student List"));
-        
-        // Refresh the student list
-        refreshStudentList(studentListModel);
-        
-        // Tuition details on the right
-        JPanel detailsPanel = new JPanel(new BorderLayout());
-        detailsPanel.setBorder(BorderFactory.createTitledBorder("Tuition Details"));
-        
-        // Table for enrolled subjects
-        String[] columnNames = {"Subject ID", "Subject Name", "Tuition"};
-        DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0);
-        JTable subjectsTable = new JTable(tableModel);
-        JScrollPane tableScrollPane = new JScrollPane(subjectsTable);
-        
-        // Tuition summary panel
-        JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JLabel totalLabel = new JLabel("Total Tuition: ₱0.00");
-        totalLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        summaryPanel.add(totalLabel);
-        
-        detailsPanel.add(tableScrollPane, BorderLayout.CENTER);
-        detailsPanel.add(summaryPanel, BorderLayout.SOUTH);
-        
-        // Split pane for list and details
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, studentScrollPane, detailsPanel);
-        splitPane.setDividerLocation(200);
-        panel.add(splitPane, BorderLayout.CENTER);
-        
-        // Event listeners
-        studentList.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting() && studentList.getSelectedValue() != null) {
-                    String username = studentList.getSelectedValue();
-                    User student = dbManager.getUser(username);
-                    
-                    if (student != null) {
-                        // Clear table
-                        tableModel.setRowCount(0);
-                        
-                        // Fill table with enrolled subjects
-                        List<Subject> enrolledSubjects = dbManager.getEnrolledSubjects(username);
-                        double totalTuition = 0;
-                        
-                        for (Subject subject : enrolledSubjects) {
-                            tableModel.addRow(new Object[]{
-                                subject.getId(),
-                                subject.getName(),
-                                String.format("₱%.2f", subject.getTuition())
-                            });
-                            
-                            totalTuition += subject.getTuition();
-                        }
-                        
-                        // Update total
-                        totalLabel.setText(String.format("Total Tuition: ₱%.2f", totalTuition));
-                    }
-                }
-            }
-        });
-        
-        return panel;
-    }
-    
-    // Salary Management Panel
-    private JPanel createSalaryPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        
-        // Faculty list on the left
-        DefaultListModel<String> facultyListModel = new DefaultListModel<>();
-        JList<String> facultyList = new JList<>(facultyListModel);
-        JScrollPane facultyScrollPane = new JScrollPane(facultyList);
-        facultyScrollPane.setBorder(BorderFactory.createTitledBorder("Faculty List"));
-        
-        // Refresh the faculty list
-        refreshFacultyList(facultyListModel);
-        
-        // Salary details on the right
-        JPanel detailsPanel = new JPanel(new BorderLayout());
-        detailsPanel.setBorder(BorderFactory.createTitledBorder("Salary Details"));
-        
-        // Table for assigned subjects
-        String[] columnNames = {"Subject ID", "Subject Name", "Salary"};
-        DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0);
-        JTable subjectsTable = new JTable(tableModel);
-        JScrollPane tableScrollPane = new JScrollPane(subjectsTable);
-        
-        // Salary summary panel
-        JPanel summaryPanel = new JPanel(new GridLayout(3, 2, 5, 5));
-        JLabel baseSalaryLabel = new JLabel("Base Salary:");
-        JTextField baseSalaryField = new JTextField("0.00");
-        JLabel totalSubjectsLabel = new JLabel("Total from Subjects:");
-        JLabel totalSubjectsValueLabel = new JLabel("₱0.00");
-        JLabel grandTotalLabel = new JLabel("Grand Total:");
-        JLabel grandTotalValueLabel = new JLabel("₱0.00");
-        
-        summaryPanel.add(baseSalaryLabel);
-        summaryPanel.add(baseSalaryField);
-        summaryPanel.add(totalSubjectsLabel);
-        summaryPanel.add(totalSubjectsValueLabel);
-        summaryPanel.add(grandTotalLabel);
-        summaryPanel.add(grandTotalValueLabel);
-        
-        // Button to update salary
-        JButton updateButton = new JButton("Update Base Salary");
-        
-        JPanel controlPanel = new JPanel(new BorderLayout());
-        controlPanel.add(summaryPanel, BorderLayout.CENTER);
-        controlPanel.add(updateButton, BorderLayout.SOUTH);
-        
-        detailsPanel.add(tableScrollPane, BorderLayout.CENTER);
-        detailsPanel.add(controlPanel, BorderLayout.SOUTH);
-        
-        // Split pane for list and details
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, facultyScrollPane, detailsPanel);
-        splitPane.setDividerLocation(200);
-        panel.add(splitPane, BorderLayout.CENTER);
-        
-        // Event listeners
-        facultyList.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting() && facultyList.getSelectedValue() != null) {
-                    String username = facultyList.getSelectedValue();
-                    User faculty = dbManager.getUser(username);
-                    
-                    if (faculty != null) {
-                        // Clear table
-                        tableModel.setRowCount(0);
-                        
-                        // Get base salary from user info
-                        String baseSalaryStr = faculty.getUserInfo("baseSalary");
-                        double baseSalary = 0;
-                        if (baseSalaryStr != null && !baseSalaryStr.isEmpty()) {
-                            try {
-                                baseSalary = Double.parseDouble(baseSalaryStr);
-                            } catch (NumberFormatException ex) {
-                                baseSalary = 0;
-                            }
-                        }
-                        baseSalaryField.setText(String.format("%.2f", baseSalary));
-                        
-                        // Fill table with assigned subjects
-                        List<Subject> assignedSubjects = dbManager.getAssignedSubjects(username);
-                        double totalSubjectsSalary = 0;
-                        
-                        for (Subject subject : assignedSubjects) {
-                            tableModel.addRow(new Object[]{
-                                subject.getId(),
-                                subject.getName(),
-                                String.format("₱%.2f", subject.getSalary())
-                            });
-                            
-                            totalSubjectsSalary += subject.getSalary();
-                        }
-                        
-                        // Update totals
-                        totalSubjectsValueLabel.setText(String.format("₱%.2f", totalSubjectsSalary));
-                        grandTotalValueLabel.setText(String.format("₱%.2f", baseSalary + totalSubjectsSalary));
-                    }
-                }
-            }
-        });
-        
-        updateButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (facultyList.getSelectedValue() == null) {
-                    JOptionPane.showMessageDialog(panel, "Please select a faculty member first", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                
-                String username = facultyList.getSelectedValue();
-                User faculty = dbManager.getUser(username);
-                
-                try {
-                    double baseSalary = Double.parseDouble(baseSalaryField.getText().trim());
-                    faculty.setUserInfo("baseSalary", String.valueOf(baseSalary));
-                    
-                    // Update grand total
-                    double totalSubjectsSalary = Double.parseDouble(totalSubjectsValueLabel.getText().replace("₱", ""));
-                    grandTotalValueLabel.setText(String.format("₱%.2f", baseSalary + totalSubjectsSalary));
-                    
-                    JOptionPane.showMessageDialog(panel, "Base salary updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(panel, "Invalid base salary format", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        });
         
         return panel;
     }
