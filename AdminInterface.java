@@ -161,96 +161,67 @@ public class AdminInterface extends JFrame {
         createButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            String username = usernameField.getText().trim();
-            String password = new String(passwordField.getPassword()).trim();
-            String age = ageField.getText().trim();
-            String schoolYear = schoolYearField.getText().trim();
-        
-            // Validate username and password
-            if (username.isEmpty() || password.isEmpty()) {
-                JOptionPane.showMessageDialog(panel, "Username and password are required", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
+                String username = usernameField.getText().trim();
+                String password = new String(passwordField.getPassword()).trim();
+                
+                if (username.isEmpty() || password.isEmpty()) {
+                    JOptionPane.showMessageDialog(panel, "Username and password are required", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                if (dbManager.getUser(username) != null) {
+                    JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                User student = new User(username, password, User.UserType.STUDENT);
+                student.setUserInfo("name", nameField.getText().trim());
+                student.setUserInfo("age", ageField.getText().trim());
+                student.setUserInfo("gender", (String) genderComboBox.getSelectedItem());
+                student.setUserInfo("department", departmentField.getText().trim());
+                student.setUserInfo("schoolYear", schoolYearField.getText().trim());
+                
+                dbManager.addUser(student);
+                refreshStudentList(studentListModel);
+                
+                JOptionPane.showMessageDialog(panel, "Student created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
-        
-            if (dbManager.getUser(username) != null) {
-                JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        
-            // Validate age - must be numeric
-            if (!age.isEmpty() && !isNumeric(age)) {
-                JOptionPane.showMessageDialog(panel, "Age must contain only numeric characters", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-             }
-        
-            // Validate school year - must be numeric
-            if (!schoolYear.isEmpty() && !isNumeric(schoolYear)) {
-                JOptionPane.showMessageDialog(panel, "School year must contain only numeric characters", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        
-            User student = new User(username, password, User.UserType.STUDENT);
-            student.setUserInfo("name", nameField.getText().trim());
-            student.setUserInfo("age", age);
-            student.setUserInfo("gender", (String) genderComboBox.getSelectedItem());
-            student.setUserInfo("department", departmentField.getText().trim());
-            student.setUserInfo("schoolYear", schoolYear);
-        
-            dbManager.addUser(student);
-             refreshStudentList(studentListModel);
-        
-             JOptionPane.showMessageDialog(panel, "Student created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
-             }
         });
         
         updateButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            String selectedUsername = studentList.getSelectedValue();
-            if (selectedUsername == null) {
-                JOptionPane.showMessageDialog(panel, "Please select a student to update", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        
-            User student = dbManager.getUser(selectedUsername);
-            String newUsername = usernameField.getText().trim();
-            String age = ageField.getText().trim();
-            String schoolYear = schoolYearField.getText().trim();
-        
-            if (!selectedUsername.equals(newUsername) && dbManager.getUser(newUsername) != null) {
-                JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        
-            // Validate age - must be numeric
-            if (!age.isEmpty() && !isNumeric(age)) {
-                JOptionPane.showMessageDialog(panel, "Age must contain only numeric characters", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        
-            // Validate school year - must be numeric
-            if (!schoolYear.isEmpty() && !isNumeric(schoolYear)) {
-                JOptionPane.showMessageDialog(panel, "School year must contain only numeric characters", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        
-            // If username is changing, need to remove old entry and add new one
-            if (!selectedUsername.equals(newUsername)) {
-                dbManager.removeUser(selectedUsername);
-                student.setUsername(newUsername);
-            }
-        
-            student.setPassword(new String(passwordField.getPassword()));
-            student.setUserInfo("name", nameField.getText().trim());
-            student.setUserInfo("age", age);
-            student.setUserInfo("gender", (String) genderComboBox.getSelectedItem());
-            student.setUserInfo("department", departmentField.getText().trim());
-            student.setUserInfo("schoolYear", schoolYear);
-        
-            dbManager.addUser(student);
-            refreshStudentList(studentListModel);
-        
-            JOptionPane.showMessageDialog(panel, "Student updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+                String selectedUsername = studentList.getSelectedValue();
+                if (selectedUsername == null) {
+                    JOptionPane.showMessageDialog(panel, "Please select a student to update", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                User student = dbManager.getUser(selectedUsername);
+                String newUsername = usernameField.getText().trim();
+                
+                if (!selectedUsername.equals(newUsername) && dbManager.getUser(newUsername) != null) {
+                    JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                // If username is changing, need to remove old entry and add new one
+                if (!selectedUsername.equals(newUsername)) {
+                    dbManager.removeUser(selectedUsername);
+                    student.setUsername(newUsername);
+                }
+                
+                student.setPassword(new String(passwordField.getPassword()));
+                student.setUserInfo("name", nameField.getText().trim());
+                student.setUserInfo("age", ageField.getText().trim());
+                student.setUserInfo("gender", (String) genderComboBox.getSelectedItem());
+                student.setUserInfo("department", departmentField.getText().trim());
+                student.setUserInfo("schoolYear", schoolYearField.getText().trim());
+                
+                dbManager.addUser(student);
+                refreshStudentList(studentListModel);
+                
+                JOptionPane.showMessageDialog(panel, "Student updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
         });
         
@@ -403,81 +374,67 @@ public class AdminInterface extends JFrame {
         createButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            String username = usernameField.getText().trim();
-            String password = new String(passwordField.getPassword()).trim();
-            String age = ageField.getText().trim();
-        
-            if (username.isEmpty() || password.isEmpty()) {
-                JOptionPane.showMessageDialog(panel, "Username and password are required", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
+                String username = usernameField.getText().trim();
+                String password = new String(passwordField.getPassword()).trim();
+                
+                if (username.isEmpty() || password.isEmpty()) {
+                    JOptionPane.showMessageDialog(panel, "Username and password are required", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                if (dbManager.getUser(username) != null) {
+                    JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                User faculty = new User(username, password, User.UserType.FACULTY);
+                faculty.setUserInfo("name", nameField.getText().trim());
+                faculty.setUserInfo("age", ageField.getText().trim());
+                faculty.setUserInfo("gender", (String) genderComboBox.getSelectedItem());
+                faculty.setUserInfo("department", departmentField.getText().trim());
+                
+                dbManager.addUser(faculty);
+                refreshFacultyList(facultyListModel);
+                
+                JOptionPane.showMessageDialog(panel, "Faculty created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
-        
-            if (dbManager.getUser(username) != null) {
-                JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        
-            // Validate age - must be numeric
-            if (!age.isEmpty() && !isNumeric(age)) {
-                JOptionPane.showMessageDialog(panel, "Age must contain only numeric characters", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        
-            User faculty = new User(username, password, User.UserType.FACULTY);
-            faculty.setUserInfo("name", nameField.getText().trim());
-            faculty.setUserInfo("age", age);
-            faculty.setUserInfo("gender", (String) genderComboBox.getSelectedItem());
-            faculty.setUserInfo("department", departmentField.getText().trim());
-        
-            dbManager.addUser(faculty);
-            refreshFacultyList(facultyListModel);
-        
-            JOptionPane.showMessageDialog(panel, "Faculty created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
-        }
-    });
+        });
         
         updateButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            String selectedUsername = facultyList.getSelectedValue();
-            if (selectedUsername == null) {
-                JOptionPane.showMessageDialog(panel, "Please select a faculty to update", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String selectedUsername = facultyList.getSelectedValue();
+                if (selectedUsername == null) {
+                    JOptionPane.showMessageDialog(panel, "Please select a faculty to update", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                User faculty = dbManager.getUser(selectedUsername);
+                String newUsername = usernameField.getText().trim();
+                
+                if (!selectedUsername.equals(newUsername) && dbManager.getUser(newUsername) != null) {
+                    JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                // If username is changing, need to remove old entry and add new one
+                if (!selectedUsername.equals(newUsername)) {
+                    dbManager.removeUser(selectedUsername);
+                    faculty.setUsername(newUsername);
+                }
+                
+                faculty.setPassword(new String(passwordField.getPassword()));
+                faculty.setUserInfo("name", nameField.getText().trim());
+                faculty.setUserInfo("age", ageField.getText().trim());
+                faculty.setUserInfo("gender", (String) genderComboBox.getSelectedItem());
+                faculty.setUserInfo("department", departmentField.getText().trim());
+                
+                dbManager.addUser(faculty);
+                refreshFacultyList(facultyListModel);
+                
+                JOptionPane.showMessageDialog(panel, "Faculty updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
-        
-            User faculty = dbManager.getUser(selectedUsername);
-            String newUsername = usernameField.getText().trim();
-            String age = ageField.getText().trim();
-        
-            if (!selectedUsername.equals(newUsername) && dbManager.getUser(newUsername) != null) {
-                JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        
-            // Validate age - must be numeric
-            if (!age.isEmpty() && !isNumeric(age)) {
-                JOptionPane.showMessageDialog(panel, "Age must contain only numeric characters", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        
-            // If username is changing, need to remove old entry and add new one
-            if (!selectedUsername.equals(newUsername)) {
-                dbManager.removeUser(selectedUsername);
-                faculty.setUsername(newUsername);
-            }
-        
-            faculty.setPassword(new String(passwordField.getPassword()));
-            faculty.setUserInfo("name", nameField.getText().trim());
-            faculty.setUserInfo("age", age);
-            faculty.setUserInfo("gender", (String) genderComboBox.getSelectedItem());
-            faculty.setUserInfo("department", departmentField.getText().trim());
-        
-            dbManager.addUser(faculty);
-            refreshFacultyList(facultyListModel);
-        
-            JOptionPane.showMessageDialog(panel, "Faculty updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
-        }
-    });
+        });
         
        deleteButton.addActionListener(new ActionListener() {
             @Override
@@ -821,6 +778,10 @@ public class AdminInterface extends JFrame {
                             subject.addPrerequisite(prereq);
                         }
                     }
+                    
+                    // Update name and department as well
+                    subject.setName(nameField.getText().trim());
+                    subject.setDepartment(departmentField.getText().trim());
                 }
                 
                 refreshSubjectList(subjectListModel);
@@ -1064,8 +1025,8 @@ public class AdminInterface extends JFrame {
         JPanel detailsPanel = new JPanel(new BorderLayout());
         detailsPanel.setBorder(BorderFactory.createTitledBorder("Salary Details"));
         
-        // Table for assigned subjects
-        String[] columnNames = {"Subject ID", "Subject Name", "Salary"};
+        // Table for assigned subjects - Adding Schedule column
+        String[] columnNames = {"Subject ID", "Subject Name", "Schedule", "Salary"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0);
         JTable subjectsTable = new JTable(tableModel);
         JScrollPane tableScrollPane = new JScrollPane(subjectsTable);
@@ -1086,12 +1047,16 @@ public class AdminInterface extends JFrame {
         summaryPanel.add(grandTotalLabel);
         summaryPanel.add(grandTotalValueLabel);
         
-        // Button to update salary
+        // Button panel for actions
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton updateButton = new JButton("Update Base Salary");
+        JButton refreshButton = new JButton("Refresh Data");
+        buttonPanel.add(updateButton);
+        buttonPanel.add(refreshButton);
         
         JPanel controlPanel = new JPanel(new BorderLayout());
         controlPanel.add(summaryPanel, BorderLayout.CENTER);
-        controlPanel.add(updateButton, BorderLayout.SOUTH);
+        controlPanel.add(buttonPanel, BorderLayout.SOUTH);
         
         detailsPanel.add(tableScrollPane, BorderLayout.CENTER);
         detailsPanel.add(controlPanel, BorderLayout.SOUTH);
@@ -1101,52 +1066,38 @@ public class AdminInterface extends JFrame {
         splitPane.setDividerLocation(200);
         panel.add(splitPane, BorderLayout.CENTER);
         
+        // Create a method to populate faculty data
+        final DefaultTableModel finalTableModel = tableModel;
+        final JLabel finalTotalSubjectsValueLabel = totalSubjectsValueLabel;
+        final JLabel finalGrandTotalValueLabel = grandTotalValueLabel;
+        final JTextField finalBaseSalaryField = baseSalaryField;
+        
+        // Method to update the faculty data in the table
+        ActionListener updateFacultyDataAction = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (facultyList.getSelectedValue() != null) {
+                    updateFacultyData(facultyList.getSelectedValue(), finalTableModel, 
+                                      finalBaseSalaryField, finalTotalSubjectsValueLabel, 
+                                      finalGrandTotalValueLabel);
+                }
+            }
+        };
         
         // Event listeners
         facultyList.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting() && facultyList.getSelectedValue() != null) {
-                    String username = facultyList.getSelectedValue();
-                    User faculty = dbManager.getUser(username);
-                    
-                    if (faculty != null) {
-                        // Clear table
-                        tableModel.setRowCount(0);
-                        
-                        // Get base salary from user info
-                        String baseSalaryStr = faculty.getUserInfo("baseSalary");
-                        double baseSalary = 0;
-                        if (baseSalaryStr != null && !baseSalaryStr.isEmpty()) {
-                            try {
-                                baseSalary = Double.parseDouble(baseSalaryStr);
-                            } catch (NumberFormatException ex) {
-                                baseSalary = 0;
-                            }
-                        }
-                        baseSalaryField.setText(String.format("%.2f", baseSalary));
-                        
-                        // Fill table with assigned subjects
-                        List<Subject> assignedSubjects = dbManager.getAssignedSubjects(username);
-                        double totalSubjectsSalary = 0;
-                        
-                        for (Subject subject : assignedSubjects) {
-                            tableModel.addRow(new Object[]{
-                                subject.getId(),
-                                subject.getName(),
-                                String.format("₱%.2f", subject.getSalary())
-                            });
-                            
-                            totalSubjectsSalary += subject.getSalary();
-                        }
-                        
-                        // Update totals
-                        totalSubjectsValueLabel.setText(String.format("₱%.2f", totalSubjectsSalary));
-                        grandTotalValueLabel.setText(String.format("₱%.2f", baseSalary + totalSubjectsSalary));
-                    }
+                    updateFacultyData(facultyList.getSelectedValue(), finalTableModel, 
+                                     finalBaseSalaryField, finalTotalSubjectsValueLabel, 
+                                     finalGrandTotalValueLabel);
                 }
             }
         });
+        
+        // Refresh button action listener
+        refreshButton.addActionListener(updateFacultyDataAction);
         
         updateButton.addActionListener(new ActionListener() {
             @Override
@@ -1173,22 +1124,70 @@ public class AdminInterface extends JFrame {
                 }
             }
         });
-          
+        
         return panel;
     }
-    private boolean isNumeric(String str) {
-        if (str == null || str.isEmpty()) {
-            return false;
-        }
     
-        for (char c : str.toCharArray()) {
-             if (!Character.isDigit(c)) {
-                 return false;
-             }
-         }
-    
-        return true;
+    private void updateFacultyData(String username, DefaultTableModel tableModel, 
+                             JTextField baseSalaryField, JLabel totalSubjectsValueLabel, 
+                             JLabel grandTotalValueLabel) {
+        User faculty = dbManager.getUser(username);
+        
+        if (faculty != null) {
+            // Clear table
+            tableModel.setRowCount(0);
+            
+            // Get base salary from user info
+            String baseSalaryStr = faculty.getUserInfo("baseSalary");
+            double baseSalary = 0;
+            if (baseSalaryStr != null && !baseSalaryStr.isEmpty()) {
+                try {
+                    baseSalary = Double.parseDouble(baseSalaryStr);
+                } catch (NumberFormatException ex) {
+                    baseSalary = 0;
+                }
+            }
+            baseSalaryField.setText(String.format("%.2f", baseSalary));
+            
+            // Fill table with subjects that have schedules assigned to this faculty
+            List<Subject> allSubjects = dbManager.getAllSubjects();
+            double totalSubjectsSalary = 0;
+            
+            for (Subject subject : allSubjects) {
+                List<Schedule> schedules = subject.getSchedules();
+                StringBuilder assignedSchedulesInfo = new StringBuilder();
+                boolean hasAssignedSchedule = false;
+                
+                for (int i = 0; i < schedules.size(); i++) {
+                    String assignedFaculty = dbManager.getScheduleAssignment(subject.getId(), i);
+                    if (assignedFaculty != null && assignedFaculty.equals(username)) {
+                        if (assignedSchedulesInfo.length() > 0) {
+                            assignedSchedulesInfo.append(", ");
+                        }
+                        Schedule schedule = schedules.get(i);
+                        assignedSchedulesInfo.append(schedule.getDayOfWeek())
+                                             .append(" ")
+                                             .append(schedule.getStartTime())
+                                             .append("-")
+                                             .append(schedule.getEndTime());
+                        hasAssignedSchedule = true;
+                    }
+                }
+                
+                if (hasAssignedSchedule) {
+                    tableModel.addRow(new Object[]{
+                        subject.getId(),
+                        subject.getName(),
+                        assignedSchedulesInfo.toString(),
+                        String.format("₱%.2f", subject.getSalary())
+                    });
+                    totalSubjectsSalary += subject.getSalary();
+                }
+            }
+            
+            // Update totals
+            totalSubjectsValueLabel.setText(String.format("₱%.2f", totalSubjectsSalary));
+            grandTotalValueLabel.setText(String.format("₱%.2f", baseSalary + totalSubjectsSalary));
         }
+    }
 }
-
-
