@@ -662,35 +662,42 @@ private JPanel createSubjectPanel() {
     // Add Faculty Assignment panel
     JPanel facultyPanel = new JPanel(new BorderLayout());
     facultyPanel.setBorder(BorderFactory.createTitledBorder("Faculty Assignment"));
-    
+
     // Current faculty assignment
     JPanel currentFacultyPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     JLabel currentFacultyLabel = new JLabel("Current Faculty: None");
     currentFacultyPanel.add(currentFacultyLabel);
-    
+
+    // Schedule list for faculty assignment
+    DefaultListModel<String> facultyScheduleListModel = new DefaultListModel<>();
+    JList<String> facultyScheduleList = new JList<>(facultyScheduleListModel);
+    JScrollPane facultyScheduleScrollPane = new JScrollPane(facultyScheduleList);
+    facultyScheduleScrollPane.setBorder(BorderFactory.createTitledBorder("Schedules"));
+
     // Faculty selection
     DefaultComboBoxModel<String> facultyComboModel = new DefaultComboBoxModel<>();
     JComboBox<String> facultyComboBox = new JComboBox<>(facultyComboModel);
-    
+
     // Populate faculty combo box
     List<User> allFaculty = dbManager.getUsersByType(User.UserType.FACULTY);
     facultyComboModel.addElement("None"); // Option to remove faculty assignment
     for (User faculty : allFaculty) {
         facultyComboModel.addElement(faculty.getUsername() + " - " + faculty.getUserInfo("name"));
     }
-    
+
     JButton assignFacultyButton = new JButton("Assign Faculty");
     JButton refreshFacultyButton = new JButton("Refresh Faculty Assignment");
-    
+
     JPanel assignFacultyPanel = new JPanel(new BorderLayout());
     assignFacultyPanel.add(facultyComboBox, BorderLayout.CENTER);
     JPanel assignFacultyButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
     assignFacultyButtonPanel.add(assignFacultyButton);
     assignFacultyButtonPanel.add(refreshFacultyButton);
     assignFacultyPanel.add(assignFacultyButtonPanel, BorderLayout.EAST);
-    
+
     facultyPanel.add(currentFacultyPanel, BorderLayout.NORTH);
-    facultyPanel.add(assignFacultyPanel, BorderLayout.CENTER);
+    facultyPanel.add(facultyScheduleScrollPane, BorderLayout.CENTER);
+    facultyPanel.add(assignFacultyPanel, BorderLayout.SOUTH);
     
     // Add panels to tabbed pane
     detailsTabbedPane.addTab("Subject Details", subjectDetailsPanel);
@@ -730,7 +737,7 @@ private JPanel createSubjectPanel() {
     clearButton.addActionListener(clearFieldsAction);
     
     // Event listeners
-    subjectList.addListSelectionListener(new ListSelectionListener() {
+subjectList.addListSelectionListener(new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent e) {
             if (!e.getValueIsAdjusting() && subjectList.getSelectedValue() != null) {
@@ -767,6 +774,12 @@ private JPanel createSubjectPanel() {
                     scheduleListModel.clear();
                     for (Schedule schedule : subject.getSchedules()) {
                         scheduleListModel.addElement(schedule.toString());
+                    }
+                    
+                    // Fill faculty schedule list for faculty assignment tab
+                    facultyScheduleListModel.clear();
+                    for (Schedule schedule : subject.getSchedules()) {
+                        facultyScheduleListModel.addElement(schedule.toString());
                     }
                     
                     // Update faculty assignment
@@ -1187,44 +1200,97 @@ private JPanel createSubjectPanel() {
     });
     
     // Faculty assignment
-    assignFacultyButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (subjectList.getSelectedValue() == null) {
-                JOptionPane.showMessageDialog(panel, "Please select a subject first", "Error", JOptionPane.ERROR_MESSAGE);
+assignFacultyButton.addActionListener(new ActionListener() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (subjectList.getSelectedValue() == null) {
+            JOptionPane.showMessageDialog(panel, "Please select a subject first", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        if (facultyScheduleList.getSelectedIndex() == -1) {
+            JOptionPane.showMessageDialog(panel, "Please select a schedule to assign the faculty to", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        String subjectId = subjectList.getSelectedValue().split(" ")[0];
+        Subject subject = dbManager.getSubject(subjectId);
+        
+        String facultyEntry = (String) facultyComboBox.getSelectedItem();
+        
+        int scheduleIndex = facultyScheduleList.getSelectedIndex();
+        
+        if (facultyEntry.equals("None")) {
+            // Remove faculty assignment for the selected schedule
+            dbManager.removeScheduleAssignment(subjectId, scheduleIndex);
+            currentFacultyLabel.setText("Current Faculty: None");
+            JOptionPane.showMessageDialog(panel, "Faculty assignment removed from the selected schedule", "Success", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            // Assign new faculty to the selected schedule
+            String facultyUsername = facultyEntry.split(" - ")[0];
+            
+            // Check for schedule conflict before assigning
+            List<Subject> allSubjects = dbManager.getAllSubjects();
+            Schedule selectedSchedule = null;
+            if (scheduleIndex >= 0 && scheduleIndex < subject.getSchedules().size()) {
+                selectedSchedule = subject.getSchedules().get(scheduleIndex);
+            }
+            if (selectedSchedule == null) {
+                JOptionPane.showMessageDialog(panel, "Selected schedule is invalid", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             
-            if (scheduleList.getSelectedIndex() == -1) {
-                JOptionPane.showMessageDialog(panel, "Please select a schedule to assign the faculty to", "Error", JOptionPane.ERROR_MESSAGE);
+            boolean conflictDetected = false;
+            for (Subject s : allSubjects) {
+                List<Schedule> schedules = s.getSchedules();
+                for (int i = 0; i < schedules.size(); i++) {
+                    String assignedFaculty = dbManager.getScheduleAssignment(s.getId(), i);
+                    if (assignedFaculty != null && assignedFaculty.equals(facultyUsername)) {
+                        Schedule facultySchedule = schedules.get(i);
+                        if (AdminInterface.this.schedulesConflict(selectedSchedule, facultySchedule)) {
+                            conflictDetected = true;
+                            break;
+                        }
+                    }
+                }
+                if (conflictDetected) {
+                    break;
+                }
+            }
+            
+            if (conflictDetected) {
+                JOptionPane.showMessageDialog(panel, "Schedule conflict detected. Faculty assignment cancelled.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             
+            dbManager.assignScheduleToFaculty(subjectId, scheduleIndex, facultyUsername);
+            currentFacultyLabel.setText("Current Faculty: " + facultyEntry);
+            JOptionPane.showMessageDialog(panel, "Faculty assigned successfully to the selected schedule", "Success", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+});
+
+// Add listener to update currentFacultyLabel when a schedule is selected in facultyScheduleList
+facultyScheduleList.addListSelectionListener(new ListSelectionListener() {
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+        if (!e.getValueIsAdjusting() && facultyScheduleList.getSelectedIndex() != -1 && subjectList.getSelectedValue() != null) {
             String subjectId = subjectList.getSelectedValue().split(" ")[0];
-            Subject subject = dbManager.getSubject(subjectId);
-            
-            String facultyEntry = (String) facultyComboBox.getSelectedItem();
-            
-            int scheduleIndex = scheduleList.getSelectedIndex();
-            
-            if (facultyEntry.equals("None")) {
-                // Remove faculty assignment for the selected schedule
-                // Assuming there is a method to remove faculty assignment from a schedule
-                // If not, remove overall assignment
-                subject.setAssignedFaculty(null);
-                currentFacultyLabel.setText("Current Faculty: None");
-                JOptionPane.showMessageDialog(panel, "Faculty assignment removed", "Success", JOptionPane.INFORMATION_MESSAGE);
+            int scheduleIndex = facultyScheduleList.getSelectedIndex();
+            String assignedFaculty = dbManager.getScheduleAssignment(subjectId, scheduleIndex);
+            if (assignedFaculty != null && !assignedFaculty.isEmpty()) {
+                User faculty = dbManager.getUser(assignedFaculty);
+                if (faculty != null) {
+                    currentFacultyLabel.setText("Current Faculty: " + assignedFaculty + " - " + faculty.getUserInfo("name"));
+                } else {
+                    currentFacultyLabel.setText("Current Faculty: " + assignedFaculty);
+                }
             } else {
-                // Assign new faculty to the selected schedule
-                String facultyUsername = facultyEntry.split(" - ")[0];
-                // Assuming there is a method to assign faculty to a schedule
-                // If not, assign overall faculty
-                subject.setAssignedFaculty(facultyUsername);
-                currentFacultyLabel.setText("Current Faculty: " + facultyEntry);
-                JOptionPane.showMessageDialog(panel, "Faculty assigned successfully to the selected schedule", "Success", JOptionPane.INFORMATION_MESSAGE);
+                currentFacultyLabel.setText("Current Faculty: None");
             }
         }
-    });
+    }
+});
     
             // Refresh enrolled students button action listener
             refreshEnrolledButton.addActionListener(new ActionListener() {
