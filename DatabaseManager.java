@@ -4,26 +4,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 public class DatabaseManager {
     private Map<String, User> users;
     private Map<String, Subject> subjects;
     // Map to track schedule assignments: key = subjectId_scheduleIndex, value = faculty username
     private Map<String, String> scheduleAssignments;
 
-    // New list to track FacultyScheduleAssignment objects
-    private List<FacultyScheduleAssignment> facultyScheduleAssignments;
-
     public DatabaseManager() {
         users = new HashMap<>();
         subjects = new HashMap<>();
         scheduleAssignments = new HashMap<>();
-        facultyScheduleAssignments = new ArrayList<>();
     }
 
     // Initialize the database with admin account
@@ -36,54 +26,6 @@ public class DatabaseManager {
         admin.setUserInfo("department", "Administration");
 
         users.put(admin.getUsername(), admin);
-    }
-    
-    // New methods to manage FacultyScheduleAssignment
-
-    public List<FacultyScheduleAssignment> getFacultyScheduleAssignmentsBySubject(String subjectId) {
-        List<FacultyScheduleAssignment> result = new ArrayList<>();
-        for (FacultyScheduleAssignment assignment : facultyScheduleAssignments) {
-            if (assignment.getSubjectId().equals(subjectId)) {
-                result.add(assignment);
-            }
-        }
-        return result;
-    }
-
-    public List<FacultyScheduleAssignment> getFacultyScheduleAssignmentsByFaculty(String facultyUsername) {
-        List<FacultyScheduleAssignment> result = new ArrayList<>();
-        for (FacultyScheduleAssignment assignment : facultyScheduleAssignments) {
-            if (assignment.getFacultyUsername().equals(facultyUsername)) {
-                result.add(assignment);
-            }
-        }
-        return result;
-    }
-
-    public void addFacultyScheduleAssignment(FacultyScheduleAssignment assignment) {
-        if (!facultyScheduleAssignments.contains(assignment)) {
-            facultyScheduleAssignments.add(assignment);
-            // Also update the scheduleAssignments map for backward compatibility
-            String key = assignment.getSubjectId() + "_" + assignment.getSchedule().getScheduleIndex();
-            scheduleAssignments.put(key, assignment.getFacultyUsername());
-        }
-    }
-
-    public void removeFacultyScheduleAssignment(String subjectId, String facultyUsername, Schedule schedule) {
-        FacultyScheduleAssignment toRemove = null;
-        for (FacultyScheduleAssignment assignment : facultyScheduleAssignments) {
-            if (assignment.getSubjectId().equals(subjectId) &&
-                assignment.getFacultyUsername().equals(facultyUsername) &&
-                assignment.getSchedule().equals(schedule)) {
-                toRemove = assignment;
-                break;
-            }
-        }
-        if (toRemove != null) {
-            facultyScheduleAssignments.remove(toRemove);
-            String key = subjectId + "_" + schedule.getScheduleIndex();
-            scheduleAssignments.remove(key);
-        }
     }
 
     // Authenticate a user based on credentials
@@ -232,17 +174,10 @@ public class DatabaseManager {
                 .collect(Collectors.toList());
     }
 
-    public List<Subject> getAssignedSubjects(String facultyUsername) {
-        List<Subject> assignedSubjects = new ArrayList<>();
-        List<Subject> allSubjects = getAllSubjects();
-        
-        for (Subject subject : allSubjects) {
-            if (facultyUsername.equals(subject.getAssignedFaculty())) {
-                assignedSubjects.add(subject);
-            }
-        }
-        
-        return assignedSubjects;
+    public List<Subject> getAssignedSubjects(String username) {
+        return subjects.values().stream()
+                .filter(subject -> subject.getAssignedFaculty().equals(username))
+                .collect(Collectors.toList());
     }
 
     // Check if a student has all prerequisites for a subject
