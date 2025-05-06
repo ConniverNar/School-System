@@ -1170,27 +1170,29 @@ private JPanel createSubjectPanel() {
         }
     });
     
-    // Refresh enrolled students button action listener
-    refreshEnrolledButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (subjectList.getSelectedValue() == null) {
-                JOptionPane.showMessageDialog(panel, "Please select a subject first to refresh enrolled students", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            String subjectId = subjectList.getSelectedValue().split(" ")[0];
-            Subject subject = dbManager.getSubject(subjectId);
-            if (subject != null) {
-                enrolledListModel.clear();
-                for (String student : subject.getEnrolledStudents()) {
-                    User studentUser = dbManager.getUser(student);
-                    if (studentUser != null) {
-                        enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name"));
+            // Refresh enrolled students button action listener
+            refreshEnrolledButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (subjectList.getSelectedValue() == null) {
+                        JOptionPane.showMessageDialog(panel, "Please select a subject first to refresh enrolled students", "Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    String subjectId = subjectList.getSelectedValue().split(" ")[0];
+                    Subject subject = dbManager.getSubject(subjectId);
+                    if (subject != null) {
+                        enrolledListModel.clear();
+                        for (String student : subject.getEnrolledStudents()) {
+                            User studentUser = dbManager.getUser(student);
+                            if (studentUser != null) {
+                                Schedule schedule = subject.getStudentSchedule(student);
+                                String scheduleInfo = (schedule != null) ? " (" + schedule.toString() + ")" : "";
+                                enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name") + scheduleInfo);
+                            }
+                        }
                     }
                 }
-            }
-        }
-    });
+            });
     
     // Refresh faculty assignment button action listener
     refreshFacultyButton.addActionListener(new ActionListener() {
