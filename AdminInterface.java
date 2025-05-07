@@ -517,7 +517,7 @@ public class AdminInterface extends JFrame {
         model.clear();
         List<User> faculty = dbManager.getUsersByType(User.UserType.FACULTY);
         for (User facultyMember : faculty) {
-            model.addElement(facultyMember.getUsername());
+            model.addElement(facultyMember.getUsername() + " - " + facultyMember.getUserInfo("name"));
         }
     }
     
@@ -1398,8 +1398,15 @@ facultyScheduleList.addListSelectionListener(new ListSelectionListener() {
         JScrollPane studentScrollPane = new JScrollPane(studentList);
         studentScrollPane.setBorder(BorderFactory.createTitledBorder("Student List"));
         
-        // Refresh the student list
-        refreshStudentList(studentListModel);
+        // Refresh the student list with username and name
+        Runnable refreshStudentList = () -> {
+            studentListModel.clear();
+            List<User> students = dbManager.getUsersByType(User.UserType.STUDENT);
+            for (User student : students) {
+                studentListModel.addElement(student.getUsername() + " - " + student.getUserInfo("name"));
+            }
+        };
+        refreshStudentList.run();
         
         // Tuition details on the right
         JPanel detailsPanel = new JPanel(new BorderLayout());
@@ -1420,6 +1427,12 @@ facultyScheduleList.addListSelectionListener(new ListSelectionListener() {
         detailsPanel.add(tableScrollPane, BorderLayout.CENTER);
         detailsPanel.add(summaryPanel, BorderLayout.SOUTH);
         
+        // Refresh button panel
+        JPanel refreshPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton refreshButton = new JButton("Refresh Data");
+        refreshPanel.add(refreshButton);
+        panel.add(refreshPanel, BorderLayout.NORTH);
+        
         // Split pane for list and details
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, studentScrollPane, detailsPanel);
         splitPane.setDividerLocation(200);
@@ -1430,7 +1443,8 @@ facultyScheduleList.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting() && studentList.getSelectedValue() != null) {
-                    String username = studentList.getSelectedValue();
+                    String selectedValue = studentList.getSelectedValue();
+                    String username = selectedValue.split(" - ")[0].trim();
                     User student = dbManager.getUser(username);
                     
                     if (student != null) {
@@ -1455,6 +1469,19 @@ facultyScheduleList.addListSelectionListener(new ListSelectionListener() {
                         totalLabel.setText(String.format("Total Tuition: ₱%.2f", totalTuition));
                     }
                 }
+            }
+        });
+        
+        // Refresh button action listener
+        refreshButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Refresh student list
+                refreshStudentList.run();
+                // Clear tuition details table and total label
+                tableModel.setRowCount(0);
+                totalLabel.setText("Total Tuition: ₱0.00");
+                studentList.clearSelection();
             }
         });
         
@@ -1519,64 +1546,81 @@ facultyScheduleList.addListSelectionListener(new ListSelectionListener() {
         splitPane.setDividerLocation(200);
         panel.add(splitPane, BorderLayout.CENTER);
         
-        // Create a method to populate faculty data
-        final DefaultTableModel finalTableModel = tableModel;
-        final JLabel finalTotalSubjectsValueLabel = totalSubjectsValueLabel;
-        final JLabel finalGrandTotalValueLabel = grandTotalValueLabel;
-        final JTextField finalBaseSalaryField = baseSalaryField;
-        
-        // Method to update the faculty data in the table
-        ActionListener updateFacultyDataAction = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (facultyList.getSelectedValue() != null) {
-                    updateFacultyData(facultyList.getSelectedValue(), finalTableModel, 
-                                      finalBaseSalaryField, finalTotalSubjectsValueLabel, 
-                                      finalGrandTotalValueLabel);
-                }
+    // Create a method to populate faculty data
+    final DefaultTableModel finalTableModel = tableModel;
+    final JLabel finalTotalSubjectsValueLabel = totalSubjectsValueLabel;
+    final JLabel finalGrandTotalValueLabel = grandTotalValueLabel;
+    final JTextField finalBaseSalaryField = baseSalaryField;
+    
+    // Method to update the faculty data in the table
+    ActionListener updateFacultyDataAction = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (facultyList.getSelectedValue() != null) {
+                String selectedValue = facultyList.getSelectedValue();
+                String username = selectedValue.split(" - ")[0].trim();
+                updateFacultyData(username, finalTableModel, 
+                                  finalBaseSalaryField, finalTotalSubjectsValueLabel, 
+                                  finalGrandTotalValueLabel);
             }
-        };
-        
-        // Event listeners
-        facultyList.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting() && facultyList.getSelectedValue() != null) {
-                    updateFacultyData(facultyList.getSelectedValue(), finalTableModel, 
-                                     finalBaseSalaryField, finalTotalSubjectsValueLabel, 
-                                     finalGrandTotalValueLabel);
-                }
+        }
+    };
+    
+    // Event listeners
+    facultyList.addListSelectionListener(new ListSelectionListener() {
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+            if (!e.getValueIsAdjusting() && facultyList.getSelectedValue() != null) {
+                String selectedValue = facultyList.getSelectedValue();
+                String username = selectedValue.split(" - ")[0].trim();
+                updateFacultyData(username, finalTableModel, 
+                                 finalBaseSalaryField, finalTotalSubjectsValueLabel, 
+                                 finalGrandTotalValueLabel);
             }
-        });
-        
+        }
+    });
+    
         // Refresh button action listener
-        refreshButton.addActionListener(updateFacultyDataAction);
-        
-        updateButton.addActionListener(new ActionListener() {
+        refreshButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (facultyList.getSelectedValue() == null) {
-                    JOptionPane.showMessageDialog(panel, "Please select a faculty member first", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                
-                String username = facultyList.getSelectedValue();
-                User faculty = dbManager.getUser(username);
-                
-                try {
-                    double baseSalary = Double.parseDouble(baseSalaryField.getText().trim());
-                    faculty.setUserInfo("baseSalary", String.valueOf(baseSalary));
-                    
-                    // Update grand total
-                    double totalSubjectsSalary = Double.parseDouble(totalSubjectsValueLabel.getText().replace("₱", ""));
-                    grandTotalValueLabel.setText(String.format("₱%.2f", baseSalary + totalSubjectsSalary));
-                    
-                    JOptionPane.showMessageDialog(panel, "Base salary updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(panel, "Invalid base salary format", "Error", JOptionPane.ERROR_MESSAGE);
-                }
+                // Refresh faculty list
+                refreshFacultyList(facultyListModel);
+                // Clear salary details table and totals
+                tableModel.setRowCount(0);
+                baseSalaryField.setText("0.00");
+                totalSubjectsValueLabel.setText("₱0.00");
+                grandTotalValueLabel.setText("₱0.00");
+                facultyList.clearSelection();
             }
         });
+    
+    updateButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (facultyList.getSelectedValue() == null) {
+                JOptionPane.showMessageDialog(panel, "Please select a faculty member first", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            String selectedValue = facultyList.getSelectedValue();
+            String username = selectedValue.split(" - ")[0].trim();
+            User faculty = dbManager.getUser(username);
+            
+            try {
+                double baseSalary = Double.parseDouble(baseSalaryField.getText().trim());
+                faculty.setUserInfo("baseSalary", String.valueOf(baseSalary));
+                
+                // Update grand total
+                double totalSubjectsSalary = Double.parseDouble(totalSubjectsValueLabel.getText().replace("₱", ""));
+                grandTotalValueLabel.setText(String.format("₱%.2f", baseSalary + totalSubjectsSalary));
+                
+                JOptionPane.showMessageDialog(panel, "Base salary updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(panel, "Invalid base salary format", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    });
         
         return panel;
     }
