@@ -33,6 +33,20 @@ public class AdminInterface extends JFrame {
         }
         return false;
     }
+
+    private boolean isNumeric(String str) {
+    if (str == null || str.isEmpty()) {
+        return false;
+    }
+    
+    for (char c : str.toCharArray()) {
+        if (!Character.isDigit(c)) {
+            return false;
+        }
+    }
+    
+    return true;
+    }
     
     private int parseTimeToMinutes(String timeStr) throws Exception {
         // Parse time strings like "7:30 AM", "10:00 AM", "13:00", "8:00 PM"
@@ -210,70 +224,99 @@ public class AdminInterface extends JFrame {
         });
         
         createButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String username = usernameField.getText().trim();
-                String password = new String(passwordField.getPassword()).trim();
-                
-                if (username.isEmpty() || password.isEmpty()) {
-                    JOptionPane.showMessageDialog(panel, "Username and password are required", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                
-                if (dbManager.getUser(username) != null) {
-                    JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                
-                User student = new User(username, password, User.UserType.STUDENT);
-                student.setUserInfo("name", nameField.getText().trim());
-                student.setUserInfo("age", ageField.getText().trim());
-                student.setUserInfo("gender", (String) genderComboBox.getSelectedItem());
-                student.setUserInfo("department", departmentField.getText().trim());
-                student.setUserInfo("schoolYear", schoolYearField.getText().trim());
-                
-                dbManager.addUser(student);
-                refreshStudentList(studentListModel);
-                
-                JOptionPane.showMessageDialog(panel, "Student created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String username = usernameField.getText().trim();
+            String password = new String(passwordField.getPassword()).trim();
+            String age = ageField.getText().trim();
+            String schoolYear = schoolYearField.getText().trim();
+        
+            // Validate username and password
+            if (username.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(panel, "Username and password are required", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
             }
-        });
+        
+            if (dbManager.getUser(username) != null) {
+                JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        
+            // Validate age - must be numeric
+            if (!age.isEmpty() && !isNumeric(age)) {
+                JOptionPane.showMessageDialog(panel, "Age must contain only numeric characters", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        
+            // Validate school year - must be numeric
+            if (!schoolYear.isEmpty() && !isNumeric(schoolYear)) {
+                JOptionPane.showMessageDialog(panel, "School year must contain only numeric characters", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        
+            User student = new User(username, password, User.UserType.STUDENT);
+            student.setUserInfo("name", nameField.getText().trim());
+            student.setUserInfo("age", age);
+            student.setUserInfo("gender", (String) genderComboBox.getSelectedItem());
+            student.setUserInfo("department", departmentField.getText().trim());
+            student.setUserInfo("schoolYear", schoolYear);
+        
+            dbManager.addUser(student);
+            refreshStudentList(studentListModel);
+        
+            JOptionPane.showMessageDialog(panel, "Student created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+        }
+    });
         
         updateButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String selectedUsername = studentList.getSelectedValue();
-                if (selectedUsername == null) {
-                    JOptionPane.showMessageDialog(panel, "Please select a student to update", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                
-                User student = dbManager.getUser(selectedUsername);
-                String newUsername = usernameField.getText().trim();
-                
-                if (!selectedUsername.equals(newUsername) && dbManager.getUser(newUsername) != null) {
-                    JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                
-                // If username is changing, need to remove old entry and add new one
-                if (!selectedUsername.equals(newUsername)) {
-                    dbManager.removeUser(selectedUsername);
-                    student.setUsername(newUsername);
-                }
-                
-                student.setPassword(new String(passwordField.getPassword()));
-                student.setUserInfo("name", nameField.getText().trim());
-                student.setUserInfo("age", ageField.getText().trim());
-                student.setUserInfo("gender", (String) genderComboBox.getSelectedItem());
-                student.setUserInfo("department", departmentField.getText().trim());
-                student.setUserInfo("schoolYear", schoolYearField.getText().trim());
-                
-                dbManager.addUser(student);
-                refreshStudentList(studentListModel);
-                
-                JOptionPane.showMessageDialog(panel, "Student updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
-            }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String selectedUsername = studentList.getSelectedValue();
+            if (selectedUsername == null) {
+                JOptionPane.showMessageDialog(panel, "Please select a student to update", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        User student = dbManager.getUser(selectedUsername);
+        String newUsername = usernameField.getText().trim();
+        String age = ageField.getText().trim();
+        String schoolYear = schoolYearField.getText().trim();
+        
+        if (!selectedUsername.equals(newUsername) && dbManager.getUser(newUsername) != null) {
+            JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Validate age - must be numeric
+        if (!age.isEmpty() && !isNumeric(age)) {
+            JOptionPane.showMessageDialog(panel, "Age must contain only numeric characters", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Validate school year - must be numeric
+        if (!schoolYear.isEmpty() && !isNumeric(schoolYear)) {
+            JOptionPane.showMessageDialog(panel, "School year must contain only numeric characters", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // If username is changing, need to remove old entry and add new one
+        if (!selectedUsername.equals(newUsername)) {
+            dbManager.removeUser(selectedUsername);
+            student.setUsername(newUsername);
+        }
+        
+        student.setPassword(new String(passwordField.getPassword()));
+        student.setUserInfo("name", nameField.getText().trim());
+        student.setUserInfo("age", age);
+        student.setUserInfo("gender", (String) genderComboBox.getSelectedItem());
+        student.setUserInfo("department", departmentField.getText().trim());
+        student.setUserInfo("schoolYear", schoolYear);
+        
+        dbManager.addUser(student);
+        refreshStudentList(studentListModel);
+        
+        JOptionPane.showMessageDialog(panel, "Student updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+        }
         });
         
         deleteButton.addActionListener(new ActionListener() {
@@ -401,7 +444,7 @@ public class AdminInterface extends JFrame {
         }
     };
     
-    clearButton.addActionListener(clearFieldsAction);
+        clearButton.addActionListener(clearFieldsAction);
         // Event listeners
         facultyList.addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -425,66 +468,80 @@ public class AdminInterface extends JFrame {
         createButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String username = usernameField.getText().trim();
-                String password = new String(passwordField.getPassword()).trim();
-                
-                if (username.isEmpty() || password.isEmpty()) {
-                    JOptionPane.showMessageDialog(panel, "Username and password are required", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                
-                if (dbManager.getUser(username) != null) {
-                    JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                
-                User faculty = new User(username, password, User.UserType.FACULTY);
-                faculty.setUserInfo("name", nameField.getText().trim());
-                faculty.setUserInfo("age", ageField.getText().trim());
-                faculty.setUserInfo("gender", (String) genderComboBox.getSelectedItem());
-                faculty.setUserInfo("department", departmentField.getText().trim());
-                
-                dbManager.addUser(faculty);
-                refreshFacultyList(facultyListModel);
-                
-                JOptionPane.showMessageDialog(panel, "Faculty created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+            String username = usernameField.getText().trim();
+            String password = new String(passwordField.getPassword()).trim();
+            String age = ageField.getText().trim();
+        
+            if (username.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(panel, "Username and password are required", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
             }
+        
+            if (dbManager.getUser(username) != null) {
+                JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        
+            // Validate age - must be numeric
+            if (!age.isEmpty() && !isNumeric(age)) {
+                JOptionPane.showMessageDialog(panel, "Age must contain only numeric characters", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        
+            User faculty = new User(username, password, User.UserType.FACULTY);
+            faculty.setUserInfo("name", nameField.getText().trim());
+            faculty.setUserInfo("age", age);
+            faculty.setUserInfo("gender", (String) genderComboBox.getSelectedItem());
+            faculty.setUserInfo("department", departmentField.getText().trim());
+        
+            dbManager.addUser(faculty);
+            refreshFacultyList(facultyListModel);
+        
+            JOptionPane.showMessageDialog(panel, "Faculty created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+        }
         });
         
         updateButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String selectedUsername = facultyList.getSelectedValue();
-                if (selectedUsername == null) {
-                    JOptionPane.showMessageDialog(panel, "Please select a faculty to update", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                
-                User faculty = dbManager.getUser(selectedUsername);
-                String newUsername = usernameField.getText().trim();
-                
-                if (!selectedUsername.equals(newUsername) && dbManager.getUser(newUsername) != null) {
-                    JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                
-                // If username is changing, need to remove old entry and add new one
-                if (!selectedUsername.equals(newUsername)) {
-                    dbManager.removeUser(selectedUsername);
-                    faculty.setUsername(newUsername);
-                }
-                
-                faculty.setPassword(new String(passwordField.getPassword()));
-                faculty.setUserInfo("name", nameField.getText().trim());
-                faculty.setUserInfo("age", ageField.getText().trim());
-                faculty.setUserInfo("gender", (String) genderComboBox.getSelectedItem());
-                faculty.setUserInfo("department", departmentField.getText().trim());
-                
-                dbManager.addUser(faculty);
-                refreshFacultyList(facultyListModel);
-                
-                JOptionPane.showMessageDialog(panel, "Faculty updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String selectedUsername = facultyList.getSelectedValue();
+            if (selectedUsername == null) {
+                JOptionPane.showMessageDialog(panel, "Please select a faculty to update", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
             }
+        
+            User faculty = dbManager.getUser(selectedUsername);
+            String newUsername = usernameField.getText().trim();
+            String age = ageField.getText().trim();
+        
+            if (!selectedUsername.equals(newUsername) && dbManager.getUser(newUsername) != null) {
+                JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        
+            // Validate age - must be numeric
+            if (!age.isEmpty() && !isNumeric(age)) {
+                JOptionPane.showMessageDialog(panel, "Age must contain only numeric characters", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        
+            // If username is changing, need to remove old entry and add new one
+            if (!selectedUsername.equals(newUsername)) {
+                dbManager.removeUser(selectedUsername);
+                faculty.setUsername(newUsername);
+            }
+        
+            faculty.setPassword(new String(passwordField.getPassword()));
+            faculty.setUserInfo("name", nameField.getText().trim());
+            faculty.setUserInfo("age", age);
+            faculty.setUserInfo("gender", (String) genderComboBox.getSelectedItem());
+            faculty.setUserInfo("department", departmentField.getText().trim());
+        
+            dbManager.addUser(faculty);
+            refreshFacultyList(facultyListModel);
+        
+            JOptionPane.showMessageDialog(panel, "Faculty updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+        }
         });
         
        deleteButton.addActionListener(new ActionListener() {
