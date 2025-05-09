@@ -446,24 +446,25 @@ public class AdminInterface extends JFrame {
     
         clearButton.addActionListener(clearFieldsAction);
         // Event listeners
-        facultyList.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting() && facultyList.getSelectedValue() != null) {
-                    String username = facultyList.getSelectedValue();
-                    User faculty = dbManager.getUser(username);
-                    
-                    if (faculty != null) {
-                        usernameField.setText(faculty.getUsername());
-                        passwordField.setText(faculty.getPassword());
-                        nameField.setText(faculty.getUserInfo("name"));
-                        ageField.setText(faculty.getUserInfo("age"));
-                        genderComboBox.setSelectedItem(faculty.getUserInfo("gender"));
-                        departmentField.setText(faculty.getUserInfo("department"));
-                    }
-                }
+facultyList.addListSelectionListener(new ListSelectionListener() {
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+        if (!e.getValueIsAdjusting() && facultyList.getSelectedValue() != null) {
+            String selectedValue = facultyList.getSelectedValue();
+            String username = selectedValue.split(" - ")[0].trim();
+            User faculty = dbManager.getUser(username);
+            
+            if (faculty != null) {
+                usernameField.setText(faculty.getUsername());
+                passwordField.setText(faculty.getPassword());
+                nameField.setText(faculty.getUserInfo("name"));
+                ageField.setText(faculty.getUserInfo("age"));
+                genderComboBox.setSelectedItem(faculty.getUserInfo("gender"));
+                departmentField.setText(faculty.getUserInfo("department"));
             }
-        });
+        }
+    }
+});
         
         createButton.addActionListener(new ActionListener() {
             @Override
@@ -501,70 +502,73 @@ public class AdminInterface extends JFrame {
         }
         });
         
-        updateButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            String selectedUsername = facultyList.getSelectedValue();
-            if (selectedUsername == null) {
-                JOptionPane.showMessageDialog(panel, "Please select a faculty to update", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        
-            User faculty = dbManager.getUser(selectedUsername);
-            String newUsername = usernameField.getText().trim();
-            String age = ageField.getText().trim();
-        
-            if (!selectedUsername.equals(newUsername) && dbManager.getUser(newUsername) != null) {
-                JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        
-            // Validate age - must be numeric
-            if (!age.isEmpty() && !isNumeric(age)) {
-                JOptionPane.showMessageDialog(panel, "Age must contain only numeric characters", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        
-            // If username is changing, need to remove old entry and add new one
-            if (!selectedUsername.equals(newUsername)) {
-                dbManager.removeUser(selectedUsername);
-                faculty.setUsername(newUsername);
-            }
-        
-            faculty.setPassword(new String(passwordField.getPassword()));
-            faculty.setUserInfo("name", nameField.getText().trim());
-            faculty.setUserInfo("age", age);
-            faculty.setUserInfo("gender", (String) genderComboBox.getSelectedItem());
-            faculty.setUserInfo("department", departmentField.getText().trim());
-        
-            dbManager.addUser(faculty);
-            refreshFacultyList(facultyListModel);
-        
-            JOptionPane.showMessageDialog(panel, "Faculty updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+updateButton.addActionListener(new ActionListener() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        String selectedValue = facultyList.getSelectedValue();
+        if (selectedValue == null) {
+            JOptionPane.showMessageDialog(panel, "Please select a faculty to update", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
-        });
+    
+        String selectedUsername = selectedValue.split(" - ")[0].trim();
+        User faculty = dbManager.getUser(selectedUsername);
+        String newUsername = usernameField.getText().trim();
+        String age = ageField.getText().trim();
+    
+        if (!selectedUsername.equals(newUsername) && dbManager.getUser(newUsername) != null) {
+            JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+    
+        // Validate age - must be numeric
+        if (!age.isEmpty() && !isNumeric(age)) {
+            JOptionPane.showMessageDialog(panel, "Age must contain only numeric characters", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+    
+        // If username is changing, need to remove old entry and add new one
+        if (!selectedUsername.equals(newUsername)) {
+            dbManager.removeUser(selectedUsername);
+            faculty.setUsername(newUsername);
+        }
+    
+        faculty.setPassword(new String(passwordField.getPassword()));
+        faculty.setUserInfo("name", nameField.getText().trim());
+        faculty.setUserInfo("age", age);
+        faculty.setUserInfo("gender", (String) genderComboBox.getSelectedItem());
+        faculty.setUserInfo("department", departmentField.getText().trim());
+    
+        dbManager.addUser(faculty);
+        refreshFacultyList(facultyListModel);
+    
+        JOptionPane.showMessageDialog(panel, "Faculty updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+    }
+});
         
-       deleteButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String selectedUsername = facultyList.getSelectedValue();
-                if (selectedUsername == null) {
-                    JOptionPane.showMessageDialog(panel, "Please select a faculty to delete", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                
-                int confirm = JOptionPane.showConfirmDialog(panel, 
-                    "Are you sure you want to delete faculty '" + selectedUsername + "'?", 
-                    "Confirm Deletion", 
-                    JOptionPane.YES_NO_OPTION);
-                
-                if (confirm == JOptionPane.YES_OPTION) {
-                    dbManager.removeUser(selectedUsername);
-                    refreshFacultyList(facultyListModel);
-                    JOptionPane.showMessageDialog(panel, "Faculty deleted successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
-                }
-            }
-        });
+deleteButton.addActionListener(new ActionListener() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        String selectedValue = facultyList.getSelectedValue();
+        if (selectedValue == null) {
+            JOptionPane.showMessageDialog(panel, "Please select a faculty to delete", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        String selectedUsername = selectedValue.split(" - ")[0].trim();
+        
+        int confirm = JOptionPane.showConfirmDialog(panel, 
+            "Are you sure you want to delete faculty '" + selectedUsername + "'?", 
+            "Confirm Deletion", 
+            JOptionPane.YES_NO_OPTION);
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            dbManager.removeUser(selectedUsername);
+            refreshFacultyList(facultyListModel);
+            JOptionPane.showMessageDialog(panel, "Faculty deleted successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+});
         
         return panel;
     }
@@ -686,14 +690,56 @@ private JPanel createSubjectPanel() {
     JPanel scheduleDetailsPanel = new JPanel(new GridLayout(0, 2, 5, 5));
     
     JTextField roomField = new JTextField(15);
-    JComboBox<String> dayComboBox = new JComboBox<>(new String[]{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"});
+
+    // Replace dayList JList with a dropdown button with checkboxes for days
+    String[] days = new String[]{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+    JButton dayDropdownButton = new JButton("Select Days");
+    JPopupMenu dayPopupMenu = new JPopupMenu();
+    JCheckBoxMenuItem[] dayCheckBoxes = new JCheckBoxMenuItem[days.length];
+    for (int i = 0; i < days.length; i++) {
+        dayCheckBoxes[i] = new JCheckBoxMenuItem(days[i]);
+        dayPopupMenu.add(dayCheckBoxes[i]);
+    }
+    dayDropdownButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            dayPopupMenu.show(dayDropdownButton, 0, dayDropdownButton.getHeight());
+        }
+    });
+
+    // Update button text based on selected checkboxes
+    ActionListener updateButtonTextListener = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            StringBuilder selectedDaysText = new StringBuilder();
+            for (JCheckBoxMenuItem cb : dayCheckBoxes) {
+                if (cb.isSelected()) {
+                    if (selectedDaysText.length() > 0) {
+                        selectedDaysText.append(", ");
+                    }
+                    selectedDaysText.append(cb.getText());
+                }
+            }
+            if (selectedDaysText.length() == 0) {
+                dayDropdownButton.setText("Select Days");
+            } else {
+                dayDropdownButton.setText(selectedDaysText.toString());
+            }
+        }
+    };
+    for (JCheckBoxMenuItem cb : dayCheckBoxes) {
+        cb.addActionListener(updateButtonTextListener);
+    }
+
+    dayDropdownButton.setPreferredSize(new Dimension(120, 25));
+
     JTextField startTimeField = new JTextField(15);
     JTextField endTimeField = new JTextField(15);
     
     scheduleDetailsPanel.add(new JLabel("Room Number:"));
     scheduleDetailsPanel.add(roomField);
-    scheduleDetailsPanel.add(new JLabel("Day:"));
-    scheduleDetailsPanel.add(dayComboBox);
+scheduleDetailsPanel.add(new JLabel("Day:"));
+scheduleDetailsPanel.add(dayDropdownButton);
     scheduleDetailsPanel.add(new JLabel("Start Time:"));
     scheduleDetailsPanel.add(startTimeField);
     scheduleDetailsPanel.add(new JLabel("End Time:"));
@@ -865,39 +911,122 @@ subjectList.addListSelectionListener(new ListSelectionListener() {
         }
     });
     
-    createButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            String id = idField.getText().trim();
-            String name = nameField.getText().trim();
-            String department = departmentField.getText().trim();
-            
-            if (id.isEmpty() || name.isEmpty() || department.isEmpty()) {
-                JOptionPane.showMessageDialog(panel, "Subject ID, name, and department are required", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
+createButton.addActionListener(new ActionListener() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        String id = idField.getText().trim();
+        String name = nameField.getText().trim();
+        String department = departmentField.getText().trim().toLowerCase();
+        
+        if (id.isEmpty() || name.isEmpty() || department.isEmpty()) {
+            JOptionPane.showMessageDialog(panel, "Subject ID, name, and department are required", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        if (dbManager.getSubject(id) != null) {
+            JOptionPane.showMessageDialog(panel, "Subject ID already exists", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        double tuition = 0;
+        double salary = 0;
+        int units = 0;
+        
+        try {
+            tuition = Double.parseDouble(tuitionField.getText().trim());
+            salary = Double.parseDouble(salaryField.getText().trim());
+            units = Integer.parseInt(unitsField.getText().trim());
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(panel, "Invalid number format for tuition, salary, or units", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        Subject subject = new Subject(id, name, department, tuition, salary, units);
+        
+        // Add prerequisites
+        String[] prereqLines = prerequisitesArea.getText().split("\n");
+        for (String prereq : prereqLines) {
+            prereq = prereq.trim();
+            if (!prereq.isEmpty()) {
+                subject.addPrerequisite(prereq);
             }
+        }
+        
+        dbManager.addSubject(subject);
+        refreshSubjectList(subjectListModel);
+        
+        JOptionPane.showMessageDialog(panel, "Subject created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+    }
+});
+    
+updateButton.addActionListener(new ActionListener() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (subjectList.getSelectedValue() == null) {
+            JOptionPane.showMessageDialog(panel, "Please select a subject to update", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        String oldId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from the list display
+        String newId = idField.getText().trim();
+        
+        if (!oldId.equals(newId) && dbManager.getSubject(newId) != null) {
+            JOptionPane.showMessageDialog(panel, "Subject ID already exists", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        double tuition = 0;
+        double salary = 0;
+        int units = 0;
+        
+        try {
+            tuition = Double.parseDouble(tuitionField.getText().trim());
+            salary = Double.parseDouble(salaryField.getText().trim());
+            units = Integer.parseInt(unitsField.getText().trim());
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(panel, "Invalid number format for tuition, salary, or units", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // If ID changed, need to remove old subject and create new one
+        if (!oldId.equals(newId)) {
+            Subject oldSubject = dbManager.getSubject(oldId);
+            dbManager.removeSubject(oldId);
             
-            if (dbManager.getSubject(id) != null) {
-                JOptionPane.showMessageDialog(panel, "Subject ID already exists", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
+            Subject newSubject = new Subject(newId, nameField.getText().trim(), departmentField.getText().trim().toLowerCase(), tuition, salary, units);
+            
+            // Copy over enrolled students and assigned faculty
+            for (String student : oldSubject.getEnrolledStudents()) {
+                newSubject.enrollStudent(student);
             }
+            newSubject.setAssignedFaculty(oldSubject.getAssignedFaculty());
             
-            double tuition = 0;
-            double salary = 0;
-            int units = 0;
-            
-            try {
-                tuition = Double.parseDouble(tuitionField.getText().trim());
-                salary = Double.parseDouble(salaryField.getText().trim());
-                units = Integer.parseInt(unitsField.getText().trim());
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(panel, "Invalid number format for tuition, salary, or units", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
+            // Copy over schedules
+            for (Schedule schedule : oldSubject.getSchedules()) {
+                Schedule newSchedule = new Schedule(newId, schedule.getRoomNumber(), schedule.getDayOfWeek(), schedule.getStartTime(), schedule.getEndTime());
+                newSubject.addSchedule(newSchedule);
             }
-            
-            Subject subject = new Subject(id, name, department, tuition, salary, units);
             
             // Add prerequisites
+            String[] prereqLines = prerequisitesArea.getText().split("\n");
+            for (String prereq : prereqLines) {
+                prereq = prereq.trim();
+                if (!prereq.isEmpty()) {
+                    newSubject.addPrerequisite(prereq);
+                }
+            }
+            
+            dbManager.addSubject(newSubject);
+        } else {
+            Subject subject = dbManager.getSubject(oldId);
+            
+            // Update basic info
+            subject.setTuition(tuition);
+            subject.setSalary(salary);
+            // subject.setUnits(units); // Removed because setUnits(int) method is undefined in Subject class
+            
+            // Clear and re-add prerequisites
+            subject.getPrerequisites().clear();
             String[] prereqLines = prerequisitesArea.getText().split("\n");
             for (String prereq : prereqLines) {
                 prereq = prereq.trim();
@@ -906,98 +1035,15 @@ subjectList.addListSelectionListener(new ListSelectionListener() {
                 }
             }
             
-            dbManager.addSubject(subject);
-            refreshSubjectList(subjectListModel);
-            
-            JOptionPane.showMessageDialog(panel, "Subject created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+            // Update name and department as well
+            subject.setName(nameField.getText().trim());
+            subject.setDepartment(departmentField.getText().trim().toLowerCase());
         }
-    });
-    
-    updateButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (subjectList.getSelectedValue() == null) {
-                JOptionPane.showMessageDialog(panel, "Please select a subject to update", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            
-            String oldId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from the list display
-            String newId = idField.getText().trim();
-            
-            if (!oldId.equals(newId) && dbManager.getSubject(newId) != null) {
-                JOptionPane.showMessageDialog(panel, "Subject ID already exists", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            
-            double tuition = 0;
-            double salary = 0;
-            int units = 0;
-            
-            try {
-                tuition = Double.parseDouble(tuitionField.getText().trim());
-                salary = Double.parseDouble(salaryField.getText().trim());
-                units = Integer.parseInt(unitsField.getText().trim());
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(panel, "Invalid number format for tuition, salary, or units", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            
-            // If ID changed, need to remove old subject and create new one
-            if (!oldId.equals(newId)) {
-                Subject oldSubject = dbManager.getSubject(oldId);
-                dbManager.removeSubject(oldId);
-                
-                Subject newSubject = new Subject(newId, nameField.getText().trim(), departmentField.getText().trim(), tuition, salary, units);
-                
-                // Copy over enrolled students and assigned faculty
-                for (String student : oldSubject.getEnrolledStudents()) {
-                    newSubject.enrollStudent(student);
-                }
-                newSubject.setAssignedFaculty(oldSubject.getAssignedFaculty());
-                
-                // Copy over schedules
-                for (Schedule schedule : oldSubject.getSchedules()) {
-                    Schedule newSchedule = new Schedule(newId, schedule.getRoomNumber(), schedule.getDayOfWeek(), schedule.getStartTime(), schedule.getEndTime());
-                    newSubject.addSchedule(newSchedule);
-                }
-                
-                // Add prerequisites
-                String[] prereqLines = prerequisitesArea.getText().split("\n");
-                for (String prereq : prereqLines) {
-                    prereq = prereq.trim();
-                    if (!prereq.isEmpty()) {
-                        newSubject.addPrerequisite(prereq);
-                    }
-                }
-                
-                dbManager.addSubject(newSubject);
-            } else {
-                Subject subject = dbManager.getSubject(oldId);
-                
-                // Update basic info
-                subject.setTuition(tuition);
-                subject.setSalary(salary);
-                // subject.setUnits(units); // Removed because setUnits(int) method is undefined in Subject class
-                
-                // Clear and re-add prerequisites
-                subject.getPrerequisites().clear();
-                String[] prereqLines = prerequisitesArea.getText().split("\n");
-                for (String prereq : prereqLines) {
-                    prereq = prereq.trim();
-                    if (!prereq.isEmpty()) {
-                        subject.addPrerequisite(prereq);
-                    }
-                }
-                
-                // Update name and department as well
-                subject.setName(nameField.getText().trim());
-                subject.setDepartment(departmentField.getText().trim());
-            }
-            
-            refreshSubjectList(subjectListModel);
-            JOptionPane.showMessageDialog(panel, "Subject updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
-        }
-    });
+        
+        refreshSubjectList(subjectListModel);
+        JOptionPane.showMessageDialog(panel, "Subject updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+    }
+});
     
     deleteButton.addActionListener(new ActionListener() {
         @Override
@@ -1176,44 +1222,64 @@ subjectList.addListSelectionListener(new ListSelectionListener() {
     });
     
     // Schedule management
-    addScheduleButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (subjectList.getSelectedValue() == null) {
-                JOptionPane.showMessageDialog(panel, "Please select a subject first", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
+addScheduleButton.addActionListener(new ActionListener() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (subjectList.getSelectedValue() == null) {
+            JOptionPane.showMessageDialog(panel, "Please select a subject first", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        String subjectId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from the list display
+        Subject subject = dbManager.getSubject(subjectId);
+        
+        String room = roomField.getText().trim();
+
+        // Get selected days from the checkboxes
+        java.util.List<String> selectedDays = new java.util.ArrayList<>();
+        for (JCheckBoxMenuItem cb : dayCheckBoxes) {
+            if (cb.isSelected()) {
+                selectedDays.add(cb.getText());
             }
-            
-            String subjectId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from the list display
-            Subject subject = dbManager.getSubject(subjectId);
-            
-            String room = roomField.getText().trim();
-            String day = (String) dayComboBox.getSelectedItem();
-            String startTime = startTimeField.getText().trim();
-            String endTime = endTimeField.getText().trim();
-            
-            if (room.isEmpty() || startTime.isEmpty() || endTime.isEmpty()) {
-                JOptionPane.showMessageDialog(panel, "Room, start time, and end time are required", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            
+        }
+
+        String startTime = startTimeField.getText().trim();
+        String endTime = endTimeField.getText().trim();
+        
+        if (room.isEmpty() || startTime.isEmpty() || endTime.isEmpty()) {
+            JOptionPane.showMessageDialog(panel, "Room, start time, and end time are required", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        if (selectedDays.isEmpty()) {
+            JOptionPane.showMessageDialog(panel, "Please select at least one day", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        for (String day : selectedDays) {
             Schedule schedule = new Schedule(subjectId, room, day, startTime, endTime);
             subject.addSchedule(schedule);
-            
-            // Refresh schedule list
-            scheduleListModel.clear();
-            for (Schedule s : subject.getSchedules()) {
-                scheduleListModel.addElement(s.toString());
-            }
-            
-            // Clear fields
-            roomField.setText("");
-            startTimeField.setText("");
-            endTimeField.setText("");
-            
-            JOptionPane.showMessageDialog(panel, "Schedule added successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
         }
-    });
+        
+        // Refresh schedule list
+        scheduleListModel.clear();
+        for (Schedule s : subject.getSchedules()) {
+            scheduleListModel.addElement(s.toString());
+        }
+        
+        // Clear fields
+        roomField.setText("");
+        startTimeField.setText("");
+        endTimeField.setText("");
+        // Clear checkboxes selection and update button text
+        for (JCheckBoxMenuItem cb : dayCheckBoxes) {
+            cb.setSelected(false);
+        }
+        dayDropdownButton.setText("Select Days");
+        
+        JOptionPane.showMessageDialog(panel, "Schedule(s) added successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+    }
+});
     
     removeScheduleButton.addActionListener(new ActionListener() {
         @Override
