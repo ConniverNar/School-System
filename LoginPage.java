@@ -25,14 +25,32 @@ public class LoginPage extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 5, 5, 5);
         
-        // Title label
-        JLabel titleLabel = new JLabel("School Management System");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.CENTER;
-        panel.add(titleLabel, gbc);
+        // Load and add logo image
+        try {
+            ImageIcon originalIcon = new ImageIcon("SMS logo.png");
+            // Scale the image to fit appropriately within the UI
+            Image scaledImage = originalIcon.getImage().getScaledInstance(200, -1, Image.SCALE_SMOOTH);
+            ImageIcon scaledIcon = new ImageIcon(scaledImage);
+            
+            JLabel logoLabel = new JLabel(scaledIcon);
+            logoLabel.setHorizontalAlignment(JLabel.CENTER);
+            
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.gridwidth = 2;
+            gbc.anchor = GridBagConstraints.CENTER;
+            panel.add(logoLabel, gbc);
+        } catch (Exception e) {
+            // Fallback to text title if image cannot be loaded
+            JLabel titleLabel = new JLabel("School Management System");
+            titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.gridwidth = 2;
+            gbc.anchor = GridBagConstraints.CENTER;
+            panel.add(titleLabel, gbc);
+            System.err.println("Error loading logo image: " + e.getMessage());
+        }
         
         // Username label and field
         JLabel usernameLabel = new JLabel("Username:");
