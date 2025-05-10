@@ -89,6 +89,8 @@ public class AdminInterface extends JFrame {
         
         // Create tabbed pane
         tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(new Font("Times New Roman", Font.BOLD, 22));
+        tabbedPane.setForeground(new Color(89, 54, 26)); // Dark brown #59361A
         
         // Add tabs for each functionality
         tabbedPane.addTab("Student Management", createStudentPanel());
@@ -99,6 +101,10 @@ public class AdminInterface extends JFrame {
         
         // Add logout button at bottom
         JButton logoutButton = new JButton("Logout");
+        logoutButton.setBackground(new Color(102, 66, 41)); // Medium-dark brown #664229
+        logoutButton.setForeground(Color.WHITE);
+        logoutButton.setFont(new Font("Times New Roman", Font.BOLD, 16));
+        logoutButton.setFocusPainted(false);
         logoutButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -108,9 +114,11 @@ public class AdminInterface extends JFrame {
         });
         
         JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBackground(new Color(255, 248, 220)); // Light cream/pale yellow #FFF8DC
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
         
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        bottomPanel.setBackground(new Color(255, 248, 220)); // Light cream/pale yellow #FFF8DC
         bottomPanel.add(logoutButton);
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
         
@@ -121,55 +129,116 @@ public class AdminInterface extends JFrame {
     // Student Management Panel
     private JPanel createStudentPanel() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(255, 248, 220)); // Light cream/pale yellow #FFF8DC
         
         // Student list on the left
         DefaultListModel<String> studentListModel = new DefaultListModel<>();
         JList<String> studentList = new JList<>(studentListModel);
         JScrollPane studentScrollPane = new JScrollPane(studentList);
-        studentScrollPane.setBorder(BorderFactory.createTitledBorder("Student List"));
+        studentScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(89, 54, 26)), "Student List", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Times New Roman", Font.BOLD, 20), new Color(89, 54, 26)));
         
         // Refresh the student list
         refreshStudentList(studentListModel);
         
         // Student details and actions on the right
         JPanel detailsPanel = new JPanel(new BorderLayout());
-        detailsPanel.setBorder(BorderFactory.createTitledBorder("Student Details"));
+        detailsPanel.setBackground(new Color(255, 248, 220)); // Light cream/pale yellow #FFF8DC
+        detailsPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(89, 54, 26)), "Student Details", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Times New Roman", Font.BOLD, 20), new Color(89, 54, 26)));
         
         // Fields for student details
         JPanel fieldsPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+        fieldsPanel.setBackground(new Color(255, 248, 220)); // Light cream/pale yellow #FFF8DC
         
         JTextField usernameField = new JTextField(15);
+        usernameField.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        usernameField.setBackground(Color.WHITE);
+        usernameField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         JPasswordField passwordField = new JPasswordField(15);
+        passwordField.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        passwordField.setBackground(Color.WHITE);
+        passwordField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         JTextField nameField = new JTextField(15);
+        nameField.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        nameField.setBackground(Color.WHITE);
+        nameField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         JTextField ageField = new JTextField(15);
+        ageField.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        ageField.setBackground(Color.WHITE);
+        ageField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         JComboBox<String> genderComboBox = new JComboBox<>(new String[]{"Male", "Female", "Other"});
+        genderComboBox.setFont(new Font("Times New Roman", Font.PLAIN, 16));
         JTextField departmentField = new JTextField(15);
+        departmentField.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        departmentField.setBackground(Color.WHITE);
+        departmentField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         JTextField schoolYearField = new JTextField(15);
+        schoolYearField.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        schoolYearField.setBackground(Color.WHITE);
+        schoolYearField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         
-        fieldsPanel.add(new JLabel("Username:"));
+        JLabel usernameLabel = new JLabel("Username:");
+        usernameLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        usernameLabel.setForeground(new Color(89, 54, 26));
+        JLabel passwordLabel = new JLabel("Password:");
+        passwordLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        passwordLabel.setForeground(new Color(89, 54, 26));
+        JLabel nameLabel = new JLabel("Name:");
+        nameLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        nameLabel.setForeground(new Color(89, 54, 26));
+        JLabel ageLabel = new JLabel("Age:");
+        ageLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        ageLabel.setForeground(new Color(89, 54, 26));
+        JLabel genderLabel = new JLabel("Gender:");
+        genderLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        genderLabel.setForeground(new Color(89, 54, 26));
+        JLabel departmentLabel = new JLabel("Department:");
+        departmentLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        departmentLabel.setForeground(new Color(89, 54, 26));
+        JLabel schoolYearLabel = new JLabel("School Year:");
+        schoolYearLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        schoolYearLabel.setForeground(new Color(89, 54, 26));
+        
+        fieldsPanel.add(usernameLabel);
         fieldsPanel.add(usernameField);
-        fieldsPanel.add(new JLabel("Password:"));
+        fieldsPanel.add(passwordLabel);
         fieldsPanel.add(passwordField);
-        fieldsPanel.add(new JLabel("Name:"));
+        fieldsPanel.add(nameLabel);
         fieldsPanel.add(nameField);
-        fieldsPanel.add(new JLabel("Age:"));
+        fieldsPanel.add(ageLabel);
         fieldsPanel.add(ageField);
-        fieldsPanel.add(new JLabel("Gender:"));
+        fieldsPanel.add(genderLabel);
         fieldsPanel.add(genderComboBox);
-        fieldsPanel.add(new JLabel("Department:"));
+        fieldsPanel.add(departmentLabel);
         fieldsPanel.add(departmentField);
-        fieldsPanel.add(new JLabel("School Year:"));
+        fieldsPanel.add(schoolYearLabel);
         fieldsPanel.add(schoolYearField);
         
         detailsPanel.add(fieldsPanel, BorderLayout.CENTER);
         
         // Buttons panel for actions
         JPanel buttonsPanel = new JPanel(new FlowLayout());
+        buttonsPanel.setBackground(new Color(255, 248, 220)); // Light cream/pale yellow #FFF8DC
         
         JButton createButton = new JButton("Create Student");
+        createButton.setBackground(new Color(102, 66, 41)); // Medium-dark brown #664229
+        createButton.setForeground(Color.WHITE);
+        createButton.setFont(new Font("Times New Roman", Font.BOLD, 16));
+        createButton.setFocusPainted(false);
         JButton updateButton = new JButton("Update Student");
+        updateButton.setBackground(new Color(102, 66, 41)); // Medium-dark brown #664229
+        updateButton.setForeground(Color.WHITE);
+        updateButton.setFont(new Font("Times New Roman", Font.BOLD, 16));
+        updateButton.setFocusPainted(false);
         JButton deleteButton = new JButton("Delete Student");
+        deleteButton.setBackground(new Color(102, 66, 41)); // Medium-dark brown #664229
+        deleteButton.setForeground(Color.WHITE);
+        deleteButton.setFont(new Font("Times New Roman", Font.BOLD, 16));
+        deleteButton.setFocusPainted(false);
         JButton clearButton = new JButton("Clear Fields");
+        clearButton.setBackground(new Color(102, 66, 41)); // Medium-dark brown #664229
+        clearButton.setForeground(Color.WHITE);
+        clearButton.setFont(new Font("Times New Roman", Font.BOLD, 16));
+        clearButton.setFocusPainted(false);
         
         buttonsPanel.add(createButton);
         buttonsPanel.add(updateButton);
@@ -367,52 +436,107 @@ public class AdminInterface extends JFrame {
     // Faculty Management Panel
     private JPanel createFacultyPanel() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(255, 248, 220)); // Light cream/pale yellow #FFF8DC
         
         // Faculty list on the left
         DefaultListModel<String> facultyListModel = new DefaultListModel<>();
         JList<String> facultyList = new JList<>(facultyListModel);
         JScrollPane facultyScrollPane = new JScrollPane(facultyList);
-        facultyScrollPane.setBorder(BorderFactory.createTitledBorder("Faculty List"));
+        facultyScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(89, 54, 26)), "Faculty List", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Times New Roman", Font.BOLD, 20), new Color(89, 54, 26)));
         
         // Refresh the faculty list
         refreshFacultyList(facultyListModel);
         
         // Faculty details and actions on the right
         JPanel detailsPanel = new JPanel(new BorderLayout());
-        detailsPanel.setBorder(BorderFactory.createTitledBorder("Faculty Details"));
+        detailsPanel.setBackground(new Color(255, 248, 220)); // Light cream/pale yellow #FFF8DC
+        detailsPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(89, 54, 26)), "Faculty Details", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Times New Roman", Font.BOLD, 20), new Color(89, 54, 26)));
         
         // Fields for faculty details
         JPanel fieldsPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+        fieldsPanel.setBackground(new Color(255, 248, 220)); // Light cream/pale yellow #FFF8DC
         
         JTextField usernameField = new JTextField(15);
+        usernameField.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        usernameField.setBackground(Color.WHITE);
+        usernameField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         JPasswordField passwordField = new JPasswordField(15);
+        passwordField.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        passwordField.setBackground(Color.WHITE);
+        passwordField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         JTextField nameField = new JTextField(15);
+        nameField.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        nameField.setBackground(Color.WHITE);
+        nameField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         JTextField ageField = new JTextField(15);
+        ageField.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        ageField.setBackground(Color.WHITE);
+        ageField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         JComboBox<String> genderComboBox = new JComboBox<>(new String[]{"Male", "Female", "Other"});
+        genderComboBox.setFont(new Font("Times New Roman", Font.PLAIN, 16));
         JTextField departmentField = new JTextField(15);
+        departmentField.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        departmentField.setBackground(Color.WHITE);
+        departmentField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         
-        fieldsPanel.add(new JLabel("Username:"));
+        JLabel usernameLabel = new JLabel("Username:");
+        usernameLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        usernameLabel.setForeground(new Color(89, 54, 26));
+        JLabel passwordLabel = new JLabel("Password:");
+        passwordLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        passwordLabel.setForeground(new Color(89, 54, 26));
+        JLabel nameLabel = new JLabel("Name:");
+        nameLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        nameLabel.setForeground(new Color(89, 54, 26));
+        JLabel ageLabel = new JLabel("Age:");
+        ageLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        ageLabel.setForeground(new Color(89, 54, 26));
+        JLabel genderLabel = new JLabel("Gender:");
+        genderLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        genderLabel.setForeground(new Color(89, 54, 26));
+        JLabel departmentLabel = new JLabel("Department:");
+        departmentLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        departmentLabel.setForeground(new Color(89, 54, 26));
+        
+        fieldsPanel.add(usernameLabel);
         fieldsPanel.add(usernameField);
-        fieldsPanel.add(new JLabel("Password:"));
+        fieldsPanel.add(passwordLabel);
         fieldsPanel.add(passwordField);
-        fieldsPanel.add(new JLabel("Name:"));
+        fieldsPanel.add(nameLabel);
         fieldsPanel.add(nameField);
-        fieldsPanel.add(new JLabel("Age:"));
+        fieldsPanel.add(ageLabel);
         fieldsPanel.add(ageField);
-        fieldsPanel.add(new JLabel("Gender:"));
+        fieldsPanel.add(genderLabel);
         fieldsPanel.add(genderComboBox);
-        fieldsPanel.add(new JLabel("Department:"));
+        fieldsPanel.add(departmentLabel);
         fieldsPanel.add(departmentField);
         
         detailsPanel.add(fieldsPanel, BorderLayout.CENTER);
         
         // Buttons panel for actions
         JPanel buttonsPanel = new JPanel(new FlowLayout());
+        buttonsPanel.setBackground(new Color(255, 248, 220)); // Light cream/pale yellow #FFF8DC
         
         JButton createButton = new JButton("Create Faculty");
+        createButton.setBackground(new Color(102, 66, 41)); // Medium-dark brown #664229
+        createButton.setForeground(Color.WHITE);
+        createButton.setFont(new Font("Times New Roman", Font.BOLD, 16));
+        createButton.setFocusPainted(false);
         JButton updateButton = new JButton("Update Faculty");
+        updateButton.setBackground(new Color(102, 66, 41)); // Medium-dark brown #664229
+        updateButton.setForeground(Color.WHITE);
+        updateButton.setFont(new Font("Times New Roman", Font.BOLD, 16));
+        updateButton.setFocusPainted(false);
         JButton deleteButton = new JButton("Delete Faculty");
+        deleteButton.setBackground(new Color(102, 66, 41)); // Medium-dark brown #664229
+        deleteButton.setForeground(Color.WHITE);
+        deleteButton.setFont(new Font("Times New Roman", Font.BOLD, 16));
+        deleteButton.setFocusPainted(false);
         JButton clearButton = new JButton("Clear Fields");
+        clearButton.setBackground(new Color(102, 66, 41)); // Medium-dark brown #664229
+        clearButton.setForeground(Color.WHITE);
+        clearButton.setFont(new Font("Times New Roman", Font.BOLD, 16));
+        clearButton.setFocusPainted(false);
         
         buttonsPanel.add(createButton);
         buttonsPanel.add(updateButton);
