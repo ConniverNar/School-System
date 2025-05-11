@@ -333,10 +333,7 @@ public class AdminInterface extends JFrame {
             dbManager.addUser(student);
             refreshStudentList(studentListModel);
         
-            JOptionPane.showMessageDialog(panel, new JLabel("Student created successfully", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(panel, "Student created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
         }
     });
         
@@ -345,10 +342,7 @@ public class AdminInterface extends JFrame {
         public void actionPerformed(ActionEvent e) {
             String selectedUsername = studentList.getSelectedValue();
             if (selectedUsername == null) {
-                JOptionPane.showMessageDialog(panel, new JLabel("Please select a student to update", JLabel.LEFT) {{
-                    setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                    setForeground(new Color(89, 54, 26));
-                }}, "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(panel, "Please select a student to update", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         
@@ -390,10 +384,7 @@ public class AdminInterface extends JFrame {
         dbManager.addUser(student);
         refreshStudentList(studentListModel);
         
-        JOptionPane.showMessageDialog(panel, new JLabel("Student updated successfully", JLabel.LEFT) {{
-            setFont(new Font("Times New Roman", Font.PLAIN, 16));
-            setForeground(new Color(89, 54, 26));
-        }}, "Success", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(panel, "Student updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
         }
         });
         
@@ -402,25 +393,19 @@ public class AdminInterface extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 String selectedUsername = studentList.getSelectedValue();
                 if (selectedUsername == null) {
-                    JOptionPane.showMessageDialog(panel, new JLabel("Please select a student to delete", JLabel.LEFT) {{
-                        setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                        setForeground(new Color(89, 54, 26));
-                    }}, "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(panel, "Please select a student to delete", "Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 
-                int confirm = JOptionPane.showConfirmDialog(panel, new JLabel("Are you sure you want to delete student '" + selectedUsername + "'?", JLabel.LEFT) {{
-                    setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                    setForeground(new Color(89, 54, 26));
-                }}, "Confirm Deletion", JOptionPane.YES_NO_OPTION);
+                int confirm = JOptionPane.showConfirmDialog(panel, 
+                    "Are you sure you want to delete student '" + selectedUsername + "'?", 
+                    "Confirm Deletion", 
+                    JOptionPane.YES_NO_OPTION);
                 
                 if (confirm == JOptionPane.YES_OPTION) {
                     dbManager.removeUser(selectedUsername);
                     refreshStudentList(studentListModel);
-                    JOptionPane.showMessageDialog(panel, new JLabel("Student deleted successfully", JLabel.LEFT) {{
-                        setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                        setForeground(new Color(89, 54, 26));
-                    }}, "Success", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(panel, "Student deleted successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
                 }
             }
         });
@@ -637,10 +622,7 @@ facultyList.addListSelectionListener(new ListSelectionListener() {
             dbManager.addUser(faculty);
             refreshFacultyList(facultyListModel);
         
-            JOptionPane.showMessageDialog(panel, new JLabel("Faculty created successfully", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(panel, "Faculty created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
         }
         });
         
@@ -649,10 +631,7 @@ updateButton.addActionListener(new ActionListener() {
     public void actionPerformed(ActionEvent e) {
         String selectedValue = facultyList.getSelectedValue();
         if (selectedValue == null) {
-            JOptionPane.showMessageDialog(panel, new JLabel("Please select a faculty to update", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(panel, "Please select a faculty to update", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
     
@@ -687,10 +666,7 @@ updateButton.addActionListener(new ActionListener() {
         dbManager.addUser(faculty);
         refreshFacultyList(facultyListModel);
     
-        JOptionPane.showMessageDialog(panel, new JLabel("Faculty updated successfully", JLabel.LEFT) {{
-            setFont(new Font("Times New Roman", Font.PLAIN, 16));
-            setForeground(new Color(89, 54, 26));
-        }}, "Success", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(panel, "Faculty updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 });
         
@@ -699,27 +675,21 @@ deleteButton.addActionListener(new ActionListener() {
     public void actionPerformed(ActionEvent e) {
         String selectedValue = facultyList.getSelectedValue();
         if (selectedValue == null) {
-            JOptionPane.showMessageDialog(panel, new JLabel("Please select a faculty to delete", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(panel, "Please select a faculty to delete", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         
         String selectedUsername = selectedValue.split(" - ")[0].trim();
         
-        int confirm = JOptionPane.showConfirmDialog(panel, new JLabel("Are you sure you want to delete faculty '" + selectedUsername + "'?", JLabel.LEFT) {{
-            setFont(new Font("Times New Roman", Font.PLAIN, 16));
-            setForeground(new Color(89, 54, 26));
-        }}, "Confirm Deletion", JOptionPane.YES_NO_OPTION);
+        int confirm = JOptionPane.showConfirmDialog(panel, 
+            "Are you sure you want to delete faculty '" + selectedUsername + "'?", 
+            "Confirm Deletion", 
+            JOptionPane.YES_NO_OPTION);
         
         if (confirm == JOptionPane.YES_OPTION) {
             dbManager.removeUser(selectedUsername);
             refreshFacultyList(facultyListModel);
-            JOptionPane.showMessageDialog(panel, new JLabel("Faculty deleted successfully", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(panel, "Faculty deleted successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 });
@@ -1220,10 +1190,7 @@ createButton.addActionListener(new ActionListener() {
         String department = departmentField.getText().trim().toLowerCase();
         
         if (id.isEmpty() || name.isEmpty() || department.isEmpty()) {
-            JOptionPane.showMessageDialog(panel, new JLabel("Subject ID, name, and department are required", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(panel, "Subject ID, name, and department are required", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         
@@ -1259,10 +1226,7 @@ createButton.addActionListener(new ActionListener() {
         dbManager.addSubject(subject);
         refreshSubjectList(subjectListModel);
         
-        JOptionPane.showMessageDialog(panel, new JLabel("Subject created successfully", JLabel.LEFT) {{
-            setFont(new Font("Times New Roman", Font.PLAIN, 16));
-            setForeground(new Color(89, 54, 26));
-        }}, "Success", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(panel, "Subject created successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 });
     
@@ -1270,10 +1234,7 @@ updateButton.addActionListener(new ActionListener() {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (subjectList.getSelectedValue() == null) {
-            JOptionPane.showMessageDialog(panel, new JLabel("Please select a subject to update", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(panel, "Please select a subject to update", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         
@@ -1351,10 +1312,7 @@ updateButton.addActionListener(new ActionListener() {
         }
         
         refreshSubjectList(subjectListModel);
-        JOptionPane.showMessageDialog(panel, new JLabel("Subject updated successfully", JLabel.LEFT) {{
-            setFont(new Font("Times New Roman", Font.PLAIN, 16));
-            setForeground(new Color(89, 54, 26));
-        }}, "Success", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(panel, "Subject updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 });
     
@@ -1362,27 +1320,21 @@ updateButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
             if (subjectList.getSelectedValue() == null) {
-            JOptionPane.showMessageDialog(panel, new JLabel("Please select a subject to delete", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(panel, "Please select a subject to delete", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             
             String subjectId = subjectList.getSelectedValue().split(" ")[0]; // Get ID from the list display
             
-            int confirm = JOptionPane.showConfirmDialog(panel, new JLabel("Are you sure you want to delete subject '" + subjectId + "'?", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Confirm Deletion", JOptionPane.YES_NO_OPTION);
+            int confirm = JOptionPane.showConfirmDialog(panel, 
+                "Are you sure you want to delete subject '" + subjectId + "'?", 
+                "Confirm Deletion", 
+                JOptionPane.YES_NO_OPTION);
             
             if (confirm == JOptionPane.YES_OPTION) {
                 dbManager.removeSubject(subjectId);
                 refreshSubjectList(subjectListModel);
-                JOptionPane.showMessageDialog(panel, new JLabel("Subject deleted successfully", JLabel.LEFT) {{
-                    setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                    setForeground(new Color(89, 54, 26));
-                }}, "Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(panel, "Subject deleted successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
         }
     });
@@ -1397,10 +1349,7 @@ updateButton.addActionListener(new ActionListener() {
                     }
                     
                     if (studentComboBox.getSelectedItem() == null) {
-                        JOptionPane.showMessageDialog(panel, new JLabel("Please select a student to enroll", JLabel.LEFT) {{
-                            setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                            setForeground(new Color(89, 54, 26));
-                        }}, "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(panel, "Please select a student to enroll", "Error", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                     
@@ -1412,20 +1361,14 @@ updateButton.addActionListener(new ActionListener() {
                     
                     // Check if student is already enrolled in the subject
                     if (subject.getEnrolledStudents().contains(studentUsername)) {
-                        JOptionPane.showMessageDialog(panel, new JLabel("Student is already enrolled in this subject", JLabel.LEFT) {{
-                            setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                            setForeground(new Color(89, 54, 26));
-                        }}, "Information", JOptionPane.INFORMATION_MESSAGE);
+                        JOptionPane.showMessageDialog(panel, "Student is already enrolled in this subject", "Information", JOptionPane.INFORMATION_MESSAGE);
                         return;
                     }
                     
                     // Show dialog to select schedule for enrollment
                     List<Schedule> schedules = subject.getSchedules();
                     if (schedules.isEmpty()) {
-                        JOptionPane.showMessageDialog(panel, new JLabel("No schedules available for this subject", JLabel.LEFT) {{
-                            setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                            setForeground(new Color(89, 54, 26));
-                        }}, "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(panel, "No schedules available for this subject", "Error", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                     
@@ -1461,10 +1404,7 @@ updateButton.addActionListener(new ActionListener() {
                         public void actionPerformed(ActionEvent e) {
                             int selectedIndex = scheduleJList.getSelectedIndex();
                             if (selectedIndex == -1) {
-                                JOptionPane.showMessageDialog(scheduleDialog, new JLabel("Please select a schedule", JLabel.LEFT) {{
-                                    setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                                    setForeground(new Color(89, 54, 26));
-                                }}, "Error", JOptionPane.ERROR_MESSAGE);
+                                JOptionPane.showMessageDialog(scheduleDialog, "Please select a schedule", "Error", JOptionPane.ERROR_MESSAGE);
                                 return;
                             }
                             // Check for schedule conflict before enrolling
@@ -1480,10 +1420,7 @@ updateButton.addActionListener(new ActionListener() {
                                 }
                             }
                             if (conflictDetected) {
-                                JOptionPane.showMessageDialog(scheduleDialog, new JLabel("Schedule conflict detected. Enrollment cancelled.", JLabel.LEFT) {{
-                                    setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                                    setForeground(new Color(89, 54, 26));
-                                }}, "Error", JOptionPane.ERROR_MESSAGE);
+                                JOptionPane.showMessageDialog(scheduleDialog, "Schedule conflict detected. Enrollment cancelled.", "Error", JOptionPane.ERROR_MESSAGE);
                                 return;
                             }
                             // Enroll student in the selected schedule
@@ -1514,10 +1451,7 @@ updateButton.addActionListener(new ActionListener() {
                             }
                         }
                         
-                        JOptionPane.showMessageDialog(panel, new JLabel("Student enrolled successfully in the selected schedule", JLabel.LEFT) {{
-                            setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                            setForeground(new Color(89, 54, 26));
-                        }}, "Success", JOptionPane.INFORMATION_MESSAGE);
+                        JOptionPane.showMessageDialog(panel, "Student enrolled successfully in the selected schedule", "Success", JOptionPane.INFORMATION_MESSAGE);
                     }
                 }
             });
@@ -1532,10 +1466,7 @@ updateButton.addActionListener(new ActionListener() {
             }
             
             if (enrolledList.getSelectedValue() == null) {
-                JOptionPane.showMessageDialog(panel, new JLabel("Please select a student to unenroll", JLabel.LEFT) {{
-                    setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                    setForeground(new Color(89, 54, 26));
-                }}, "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(panel, "Please select a student to unenroll", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             
@@ -1557,10 +1488,7 @@ updateButton.addActionListener(new ActionListener() {
                 }
             }
             
-            JOptionPane.showMessageDialog(panel, new JLabel("Student unenrolled successfully", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(panel, "Student unenrolled successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
         }
     });
     
@@ -1590,18 +1518,12 @@ addScheduleButton.addActionListener(new ActionListener() {
         String endTime = endTimeField.getText().trim();
         
         if (room.isEmpty() || startTime.isEmpty() || endTime.isEmpty()) {
-            JOptionPane.showMessageDialog(panel, new JLabel("Room, start time, and end time are required", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(panel, "Room, start time, and end time are required", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         
         if (selectedDays.isEmpty()) {
-            JOptionPane.showMessageDialog(panel, new JLabel("Please select at least one day", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(panel, "Please select at least one day", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         
@@ -1626,10 +1548,7 @@ addScheduleButton.addActionListener(new ActionListener() {
         }
         dayDropdownButton.setText("Select Days");
         
-            JOptionPane.showMessageDialog(panel, new JLabel("Schedule(s) added successfully", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Success", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(panel, "Schedule(s) added successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 });
     
@@ -1642,10 +1561,7 @@ addScheduleButton.addActionListener(new ActionListener() {
             }
             
             if (scheduleList.getSelectedValue() == null) {
-            JOptionPane.showMessageDialog(panel, new JLabel("Please select a schedule to remove", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(panel, "Please select a schedule to remove", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             
@@ -1662,10 +1578,7 @@ addScheduleButton.addActionListener(new ActionListener() {
                     scheduleListModel.addElement(s.toString());
                 }
                 
-            JOptionPane.showMessageDialog(panel, new JLabel("Schedule removed successfully", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(panel, "Schedule removed successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
         }
     });
@@ -1690,10 +1603,7 @@ assignFacultyButton.addActionListener(new ActionListener() {
         }
         
         if (facultyScheduleList.getSelectedIndex() == -1) {
-            JOptionPane.showMessageDialog(panel, new JLabel("Please select a schedule to assign the faculty to", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(panel, "Please select a schedule to assign the faculty to", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         
@@ -1708,10 +1618,7 @@ assignFacultyButton.addActionListener(new ActionListener() {
             // Remove faculty assignment for the selected schedule
             dbManager.removeScheduleAssignment(subjectId, scheduleIndex);
             currentFacultyLabel.setText("Current Faculty: None");
-            JOptionPane.showMessageDialog(panel, new JLabel("Faculty assignment removed from the selected schedule", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(panel, "Faculty assignment removed from the selected schedule", "Success", JOptionPane.INFORMATION_MESSAGE);
         } else {
             // Assign new faculty to the selected schedule
             String facultyUsername = facultyEntry.split(" - ")[0];
@@ -1723,10 +1630,7 @@ assignFacultyButton.addActionListener(new ActionListener() {
                 selectedSchedule = subject.getSchedules().get(scheduleIndex);
             }
             if (selectedSchedule == null) {
-            JOptionPane.showMessageDialog(panel, new JLabel("Selected schedule is invalid", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(panel, "Selected schedule is invalid", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             
@@ -1749,19 +1653,13 @@ assignFacultyButton.addActionListener(new ActionListener() {
             }
             
             if (conflictDetected) {
-            JOptionPane.showMessageDialog(panel, new JLabel("Schedule conflict detected. Faculty assignment cancelled.", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(panel, "Schedule conflict detected. Faculty assignment cancelled.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             
             dbManager.assignScheduleToFaculty(subjectId, scheduleIndex, facultyUsername);
             currentFacultyLabel.setText("Current Faculty: " + facultyEntry);
-            JOptionPane.showMessageDialog(panel, new JLabel("Faculty assigned successfully to the selected schedule", JLabel.LEFT) {{
-                setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                setForeground(new Color(89, 54, 26));
-            }}, "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(panel, "Faculty assigned successfully to the selected schedule", "Success", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 });
@@ -1793,10 +1691,7 @@ facultyScheduleList.addListSelectionListener(new ListSelectionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     if (subjectList.getSelectedValue() == null) {
-                        JOptionPane.showMessageDialog(panel, new JLabel("Please select a subject first to refresh enrolled students", JLabel.LEFT) {{
-                            setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                            setForeground(new Color(89, 54, 26));
-                        }}, "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(panel, "Please select a subject first to refresh enrolled students", "Error", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                     String subjectId = subjectList.getSelectedValue().split(" ")[0];
@@ -2142,10 +2037,7 @@ facultyScheduleList.addListSelectionListener(new ListSelectionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
             if (facultyList.getSelectedValue() == null) {
-                JOptionPane.showMessageDialog(panel, new JLabel("Please select a faculty member first", JLabel.LEFT) {{
-                    setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                    setForeground(new Color(89, 54, 26));
-                }}, "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(panel, "Please select a faculty member first", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             
@@ -2161,15 +2053,9 @@ facultyScheduleList.addListSelectionListener(new ListSelectionListener() {
                 double totalSubjectsSalary = Double.parseDouble(totalSubjectsValueLabel.getText().replace("₱", ""));
                 grandTotalValueLabel.setText(String.format("₱%.2f", baseSalary + totalSubjectsSalary));
                 
-                JOptionPane.showMessageDialog(panel, new JLabel("Base salary updated successfully", JLabel.LEFT) {{
-                    setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                    setForeground(new Color(89, 54, 26));
-                }}, "Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(panel, "Base salary updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(panel, new JLabel("Invalid base salary format", JLabel.LEFT) {{
-                    setFont(new Font("Times New Roman", Font.PLAIN, 16));
-                    setForeground(new Color(89, 54, 26));
-                }}, "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(panel, "Invalid base salary format", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     });

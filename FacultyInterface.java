@@ -105,20 +105,33 @@ public class FacultyInterface extends JFrame {
     // Subject Assignment Panel
     private JPanel createSubjectAssignmentPanel() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(0xFFF8DC)); // Light cream/pale yellow background
         
         // Available subjects list on the left
         JPanel leftPanel = new JPanel(new BorderLayout());
-        leftPanel.setBorder(BorderFactory.createTitledBorder("Available Subjects"));
+        TitledBorder leftBorder = BorderFactory.createTitledBorder("Available Subjects");
+        leftBorder.setTitleColor(new Color(0x59361A));
+        leftBorder.setTitleFont(new Font("Times New Roman", Font.BOLD, 22));
+        leftPanel.setBorder(leftBorder);
+        leftPanel.setBackground(new Color(0xFFF8DC));
         
         DefaultListModel<String> subjectListModel = new DefaultListModel<>();
         JList<String> subjectList = new JList<>(subjectListModel);
+        subjectList.setBackground(Color.WHITE);
+        subjectList.setForeground(new Color(0x59361A));
+        subjectList.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        subjectList.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1)); // Thin gray border
         JScrollPane subjectScrollPane = new JScrollPane(subjectList);
         
         leftPanel.add(subjectScrollPane, BorderLayout.CENTER);
         
         // Subject schedules on the right
         JPanel rightPanel = new JPanel(new BorderLayout());
-        rightPanel.setBorder(BorderFactory.createTitledBorder("Subject Schedules"));
+        TitledBorder rightBorder = BorderFactory.createTitledBorder("Subject Schedules");
+        rightBorder.setTitleColor(new Color(0x59361A));
+        rightBorder.setTitleFont(new Font("Times New Roman", Font.BOLD, 22));
+        rightPanel.setBorder(rightBorder);
+        rightPanel.setBackground(new Color(0xFFF8DC));
         
         // Table for schedule display with assignment status
         String[] columnNames = {"Schedule", "Assigned To", "Status"};
@@ -130,12 +143,22 @@ public class FacultyInterface extends JFrame {
         };
         
         JTable scheduleTable = new JTable(scheduleTableModel);
+        scheduleTable.setBackground(Color.WHITE);
+        scheduleTable.setForeground(new Color(0x59361A));
+        scheduleTable.setFont(new Font("Times New Roman", Font.PLAIN, 16));
         JScrollPane scheduleScrollPane = new JScrollPane(scheduleTable);
         
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.setBackground(new Color(0xFFF8DC));
         JButton assignButton = new JButton("Assign Selected Schedule");
-        JButton removeButton = new JButton("Remove Assignment");
+        assignButton.setBackground(new Color(0x664229));
+        assignButton.setForeground(Color.WHITE);
+        assignButton.setFont(new Font("Times New Roman", Font.BOLD, 16));
         assignButton.setEnabled(false);
+        JButton removeButton = new JButton("Remove Assignment");
+        removeButton.setBackground(new Color(0x664229));
+        removeButton.setForeground(Color.WHITE);
+        removeButton.setFont(new Font("Times New Roman", Font.BOLD, 16));
         removeButton.setEnabled(false);
         
         buttonPanel.add(assignButton);
@@ -382,6 +405,7 @@ public class FacultyInterface extends JFrame {
     // Course Load Panel
     private JPanel createCourseLoadPanel() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(0xFFF8DC)); // Light cream/pale yellow background
         
         // Create table for assigned subjects
         String[] columnNames = {"Subject ID", "Name", "Department", "Units", "Schedule"};
@@ -393,15 +417,26 @@ public class FacultyInterface extends JFrame {
         };
         
         JTable subjectsTable = new JTable(tableModel);
+        subjectsTable.setBackground(Color.WHITE);
+        subjectsTable.setForeground(new Color(0x59361A));
+        subjectsTable.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        subjectsTable.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1)); // Thin gray border
         JScrollPane scrollPane = new JScrollPane(subjectsTable);
         
         panel.add(scrollPane, BorderLayout.CENTER);
         
         // Create panel for summary information
         JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        summaryPanel.setBackground(new Color(0xFFF8DC));
         JLabel totalSubjectsLabel = new JLabel("Total Subjects: 0");
+        totalSubjectsLabel.setForeground(new Color(0x59361A));
+        totalSubjectsLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
         JLabel totalUnitsLabel = new JLabel("Total Units: 0");
+        totalUnitsLabel.setForeground(new Color(0x59361A));
+        totalUnitsLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
         JLabel totalSchedulesLabel = new JLabel("Total Schedules: 0");
+        totalSchedulesLabel.setForeground(new Color(0x59361A));
+        totalSchedulesLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
         
         summaryPanel.add(totalSubjectsLabel);
         summaryPanel.add(Box.createHorizontalStrut(30));
@@ -413,6 +448,9 @@ public class FacultyInterface extends JFrame {
         
         // Refresh button
         JButton refreshButton = new JButton("Refresh");
+        refreshButton.setBackground(new Color(0x664229));
+        refreshButton.setForeground(Color.WHITE);
+        refreshButton.setFont(new Font("Times New Roman", Font.BOLD, 16));
         refreshButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -421,6 +459,7 @@ public class FacultyInterface extends JFrame {
         });
         
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        topPanel.setBackground(new Color(0xFFF8DC));
         topPanel.add(refreshButton);
         panel.add(topPanel, BorderLayout.NORTH);
         
@@ -494,6 +533,7 @@ public class FacultyInterface extends JFrame {
     // Salary Information Panel
     private JPanel createSalaryPanel() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(0xFFF8DC)); // Light cream/pale yellow background
         
         // Table for salary breakdown
         String[] columnNames = {"Subject ID", "Subject Name", "Schedules", "Salary per Schedule", "Total"};
@@ -505,17 +545,26 @@ public class FacultyInterface extends JFrame {
         };
         
         JTable salaryTable = new JTable(tableModel);
+        salaryTable.setBackground(Color.WHITE);
+        salaryTable.setForeground(new Color(0x59361A));
+        salaryTable.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        salaryTable.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1)); // Thin gray border
         JScrollPane tableScrollPane = new JScrollPane(salaryTable);
         
         panel.add(tableScrollPane, BorderLayout.CENTER);
         
         // Summary panel
         JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
-        
+        summaryPanel.setBackground(new Color(0xFFF8DC));
         JLabel baseSalaryLabel = new JLabel("Base Salary: ₱0.00");
+        baseSalaryLabel.setForeground(new Color(0x59361A));
+        baseSalaryLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
         JLabel subjectSalaryLabel = new JLabel("Subject Salary: ₱0.00");
+        subjectSalaryLabel.setForeground(new Color(0x59361A));
+        subjectSalaryLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
         JLabel totalSalaryLabel = new JLabel("Total Salary: ₱0.00");
-        totalSalaryLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        totalSalaryLabel.setForeground(new Color(0x59361A));
+        totalSalaryLabel.setFont(new Font("Times New Roman", Font.BOLD, 16));
         
         summaryPanel.add(baseSalaryLabel);
         summaryPanel.add(subjectSalaryLabel);
@@ -525,6 +574,9 @@ public class FacultyInterface extends JFrame {
         
         // Refresh button
         JButton refreshButton = new JButton("Refresh");
+        refreshButton.setBackground(new Color(0x664229));
+        refreshButton.setForeground(Color.WHITE);
+        refreshButton.setFont(new Font("Times New Roman", Font.BOLD, 16));
         refreshButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -533,6 +585,7 @@ public class FacultyInterface extends JFrame {
         });
         
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        topPanel.setBackground(new Color(0xFFF8DC));
         topPanel.add(refreshButton);
         panel.add(topPanel, BorderLayout.NORTH);
         
