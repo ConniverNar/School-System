@@ -16,10 +16,11 @@ public class LoginPage extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
-        // Create panel with padding
+        // Create panel with padding and set background color to light cream/pale yellow (#FFF8DC)
         JPanel panel = new JPanel();
         panel.setLayout(new GridBagLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBackground(new Color(0xFF, 0xF8, 0xDC));
         
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -43,7 +44,8 @@ public class LoginPage extends JFrame {
         } catch (Exception e) {
             // Fallback to text title if image cannot be loaded
             JLabel titleLabel = new JLabel("School Management System");
-            titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+            titleLabel.setFont(new Font("Times New Roman", Font.BOLD, 22));
+            titleLabel.setForeground(new Color(0x59, 0x36, 0x1A)); // Dark brown
             gbc.gridx = 0;
             gbc.gridy = 0;
             gbc.gridwidth = 2;
@@ -54,29 +56,42 @@ public class LoginPage extends JFrame {
         
         // Username label and field
         JLabel usernameLabel = new JLabel("Username:");
+        usernameLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        usernameLabel.setForeground(new Color(0x59, 0x36, 0x1A)); // Dark brown
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         panel.add(usernameLabel, gbc);
         
         usernameField = new JTextField(15);
+        usernameField.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        usernameField.setBackground(Color.WHITE);
+        usernameField.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
         gbc.gridx = 1;
         gbc.gridy = 1;
         panel.add(usernameField, gbc);
         
         // Password label and field
         JLabel passwordLabel = new JLabel("Password:");
+        passwordLabel.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        passwordLabel.setForeground(new Color(0x59, 0x36, 0x1A)); // Dark brown
         gbc.gridx = 0;
         gbc.gridy = 2;
         panel.add(passwordLabel, gbc);
         
         passwordField = new JPasswordField(15);
+        passwordField.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        passwordField.setBackground(Color.WHITE);
+        passwordField.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
         gbc.gridx = 1;
         gbc.gridy = 2;
         panel.add(passwordField, gbc);
         
         // Login button
         JButton loginButton = new JButton("Login");
+        loginButton.setFont(new Font("Times New Roman", Font.BOLD, 16));
+        loginButton.setBackground(new Color(0x66, 0x42, 0x29)); // Medium-dark brown
+        loginButton.setForeground(Color.WHITE);
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.gridwidth = 2;
