@@ -46,10 +46,18 @@ public class DatabaseManager {
         student3.setUserInfo("department", "Computer Engineering");
         student3.setUserInfo("schoolYear", "2025");
 
+        User faculty1 = new User("Steve", "123", User.UserType.FACULTY);
+        faculty1.setUserInfo("name", "Steve Rogers");
+        faculty1.setUserInfo("age", "38");
+        faculty1.setUserInfo("gender", "Male");
+        faculty1.setUserInfo("department", "Computer Engineering");
+
         users.put(admin.getUsername(), admin);
         users.put(student1.getUsername(), student1);
         users.put(student2.getUsername(), student2);
         users.put(student3.getUsername(), student3);
+        users.put(faculty1.getUsername(), faculty1);
+
     }
 
     // Authenticate a user based on credentials
