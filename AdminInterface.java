@@ -1458,7 +1458,7 @@ updateButton.addActionListener(new ActionListener() {
                     
                     scheduleDialog.setVisible(true);
                     
-if (enrolled[0]) {
+    if (enrolled[0]) {
     // Refresh enrolled students list with schedule info showing all schedules the student is enrolled in
     enrolledListModel.clear();
     for (String student : subject.getEnrolledStudents()) {
@@ -1480,13 +1480,11 @@ if (enrolled[0]) {
         }
     }
     
-    // Refresh student combo box to remove newly enrolled student
+    // Refresh student combo box to keep all students (allow multiple schedule enrollments)
     studentComboModel.removeAllElements();
     List<User> allStudents = dbManager.getUsersByType(User.UserType.STUDENT);
     for (User student : allStudents) {
-        if (!subject.getEnrolledStudents().contains(student.getUsername())) {
-            studentComboModel.addElement(student.getUsername() + " - " + student.getUserInfo("name"));
-        }
+        studentComboModel.addElement(student.getUsername() + " - " + student.getUserInfo("name"));
     }
     
     JOptionPane.showMessageDialog(panel, "Student enrolled successfully in the selected schedules", "Success", JOptionPane.INFORMATION_MESSAGE);
