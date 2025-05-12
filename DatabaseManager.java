@@ -58,6 +58,37 @@ public class DatabaseManager {
         users.put(student3.getUsername(), student3);
         users.put(faculty1.getUsername(), faculty1);
 
+        // Preload subject CpE-1101 Basic Coding
+        Subject subject1 = new Subject("CpE-1101", "Basic Coding", "Computer Engineering", 2000, 2000, 2);
+        subjects.put(subject1.getId(), subject1);
+
+        // Add schedule to CpE-1101
+        Schedule schedule = new Schedule("CpE-1101", "CEAC-01", "Monday", "7:30 AM", "10:30 AM");
+        subject1.addSchedule(schedule);
+
+        Schedule schedule1 = new Schedule("CpE-1101", "CEAC-01", "Wednesday", "7:30 AM", "10:30 AM");
+        subject1.addSchedule(schedule1);
+
+        Schedule schedule2 = new Schedule("CpE-1101", "CEAC-01", "Friday", "7:30 AM", "10:30 AM");
+        subject1.addSchedule(schedule2);
+
+        // Preload subject CpE-1102 Advanced Coding with prerequisite CpE-1101
+        Subject subject2 = new Subject("CpE-1102", "Advanced Coding", "Computer Engineering", 2000, 2000, 2);
+        subject2.addPrerequisite("CpE-1101");
+        subjects.put(subject2.getId(), subject2);
+
+        Schedule schedule3 = new Schedule("CpE-1102", "CEAC-01", "Tuesday", "1:30 PM", "4:30 PM");
+        subject2.addSchedule(schedule3);
+
+        Schedule schedule4 = new Schedule("CpE-1102", "CEAC-01", "Thursday", "1:30 PM", "4:30 PM");
+        subject2.addSchedule(schedule4);
+    }
+
+    public void addScheduleToSubject(String subjectId, Schedule schedule) {
+        Subject subject = subjects.get(subjectId);
+        if (subject != null) {
+            subject.addSchedule(schedule);
+        }
     }
 
     // Authenticate a user based on credentials
