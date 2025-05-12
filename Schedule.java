@@ -41,7 +41,7 @@ public class Schedule {
 
     public boolean conflictsWith(Schedule other) {
         // If not on the same day, no conflict
-        if (!this.dayOfWeek.equals(other.dayOfWeek)) {
+        if (!this.dayOfWeek.trim().equalsIgnoreCase(other.dayOfWeek.trim())) {
             return false;
         }
         

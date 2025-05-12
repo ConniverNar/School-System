@@ -1,4 +1,4 @@
-import javax.swing.*;
+ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -117,6 +117,7 @@ public class StudentInterface extends JFrame {
         scheduleList.setBackground(Color.WHITE);
         scheduleList.setForeground(new Color(0x59361A));
         scheduleList.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+        scheduleList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION); // Allow multiple selection
         JScrollPane scheduleScrollPane = new JScrollPane(scheduleList);
         schedulePanel.add(scheduleScrollPane, BorderLayout.CENTER);
         schedulePanel.setVisible(false); // Initially hidden
@@ -124,6 +125,7 @@ public class StudentInterface extends JFrame {
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
                 availableScrollPane, schedulePanel);
         splitPane.setResizeWeight(0.7);
+        schedulePanel.setPreferredSize(new Dimension(800, 150)); // Set preferred size for visibility
 
         // Action panel at the bottom
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -170,43 +172,61 @@ public class StudentInterface extends JFrame {
                 return;
             }
 
-            // Enroll student in the selected schedule if any, else default to first schedule or no schedule
-            int scheduleIndex = -1;
-            if (!subject.getSchedules().isEmpty()) {
-                // Get selected schedule index from scheduleList if visible and a selection is made
-                if (schedulePanel.isVisible() && scheduleList.getSelectedIndex() != -1) {
-                    scheduleIndex = scheduleList.getSelectedIndex();
+            // Enroll student in the selected schedules if any, else default to first schedule or no schedule
+            int[] selectedScheduleIndices;
+            List<Schedule> schedules = subject.getSchedules();
+            if (!schedules.isEmpty()) {
+                if (schedulePanel.isVisible() && !scheduleList.isSelectionEmpty()) {
+                    // Map selected indices in scheduleListModel to actual schedule indices in subject.getSchedules()
+                    List<Integer> actualScheduleIndices = new ArrayList<>();
+                    List<Schedule> studentSchedules = subject.getStudentSchedules(studentUser.getUsername());
+                    int modelIndex = 0;
+                    for (int i = 0; i < schedules.size(); i++) {
+                        Schedule schedule = schedules.get(i);
+                        if (studentSchedules.contains(schedule)) {
+                            continue; // skipped in scheduleListModel
+                        }
+                        if (scheduleList.isSelectedIndex(modelIndex)) {
+                            actualScheduleIndices.add(i);
+                        }
+                        modelIndex++;
+                    }
+                    selectedScheduleIndices = actualScheduleIndices.stream().mapToInt(Integer::intValue).toArray();
                 } else {
-                    scheduleIndex = 0; // default to first schedule
+                    selectedScheduleIndices = new int[]{0}; // default to first schedule
                 }
             } else {
-                scheduleIndex = -1; // no schedule
+                selectedScheduleIndices = new int[0]; // no schedule
             }
 
-            // Check for schedule conflict if schedule exists
-            if (scheduleIndex >= 0) {
-                // Get all currently enrolled subjects with their schedules
-                List<Subject> enrolledSubjects = dbManager.getEnrolledSubjects(studentUser.getUsername());
+            // Get all currently enrolled subjects with their schedules
+            List<Subject> enrolledSubjects = dbManager.getEnrolledSubjects(studentUser.getUsername());
+
+            // Check for conflicts with existing enrollments for each selected schedule
+            for (int scheduleIndex : selectedScheduleIndices) {
                 Schedule newSchedule = subject.getSchedules().get(scheduleIndex);
-                
-                // Check for conflicts with existing enrollments
+
                 for (Subject enrolledSubject : enrolledSubjects) {
-                    Schedule enrolledSchedule = enrolledSubject.getStudentSchedule(studentUser.getUsername());
-                    if (enrolledSchedule != null && newSchedule.conflictsWith(enrolledSchedule)) {
-                        JOptionPane.showMessageDialog(panel,
-                                "Cannot enroll in " + subject.getName() + " due to schedule conflict with " + 
-                                enrolledSubject.getName() + ".\n\n" +
-                                "Conflict details:\n" +
-                                "- New schedule: " + newSchedule.toString() + "\n" +
-                                "- Conflicting schedule: " + enrolledSchedule.toString(),
-                                "Schedule Conflict", JOptionPane.ERROR_MESSAGE);
-                        return;
+                    List<Schedule> enrolledSchedules = enrolledSubject.getStudentSchedules(studentUser.getUsername());
+                    for (Schedule enrolledSchedule : enrolledSchedules) {
+                        if (enrolledSchedule != null && !enrolledSchedule.equals(newSchedule) && newSchedule.conflictsWith(enrolledSchedule)) {
+                            JOptionPane.showMessageDialog(panel,
+                                    "Cannot enroll in " + subject.getName() + " due to schedule conflict with " +
+                                    enrolledSubject.getName() + ".\n\n" +
+                                    "Conflict details:\n" +
+                                    "- New schedule: " + newSchedule.toString() + "\n" +
+                                    "- Conflicting schedule: " + enrolledSchedule.toString(),
+                                    "Schedule Conflict", JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
                     }
                 }
             }
 
-            // Enroll student
-            subject.enrollStudent(studentUser.getUsername(), scheduleIndex);
+            // Enroll student in all selected schedules
+            for (int scheduleIndex : selectedScheduleIndices) {
+                subject.enrollStudent(studentUser.getUsername(), scheduleIndex);
+            }
 
             JOptionPane.showMessageDialog(panel,
                     "Successfully enrolled in " + subject.getName(),
@@ -248,15 +268,24 @@ public class StudentInterface extends JFrame {
                         // Show available schedules
                         scheduleListModel.clear();
                         List<Schedule> schedules = selectedSubject[0].getSchedules();
-                        
+
                         // Get enrolled subjects to check for potential conflicts
                         List<Subject> enrolledSubjects = dbManager.getEnrolledSubjects(studentUser.getUsername());
-                        
+
+                        // Get student's enrolled schedules for this subject
+                        List<Schedule> studentSchedules = selectedSubject[0].getStudentSchedules(studentUser.getUsername());
+
                         for (int i = 0; i < schedules.size(); i++) {
                             Schedule schedule = schedules.get(i);
+
+                            // Skip schedules the student is already enrolled in for this subject
+                            if (studentSchedules.contains(schedule)) {
+                                continue;
+                            }
+
                             boolean hasConflict = false;
                             String conflictInfo = "";
-                            
+
                             // Check if this schedule conflicts with any enrolled subject
                             for (Subject enrolledSubject : enrolledSubjects) {
                                 Schedule enrolledSchedule = enrolledSubject.getStudentSchedule(studentUser.getUsername());
@@ -266,13 +295,29 @@ public class StudentInterface extends JFrame {
                                     break;
                                 }
                             }
-                            
-                            // Add schedule to list with conflict warning if applicable
-                            scheduleListModel.addElement("Schedule " + (i + 1) + ": " + schedules.get(i).toString() + 
-                                                        (hasConflict ? conflictInfo : ""));
-                        }
-                        schedulePanel.setVisible(!schedules.isEmpty());
+
+                    // Add schedule to list with conflict warning if applicable
+                    scheduleListModel.addElement("Schedule " + (i + 1) + ": " + schedules.get(i).toString() +
+                            (hasConflict ? conflictInfo : ""));
+                }
+                schedulePanel.setVisible(scheduleListModel.getSize() > 0);
+                scheduleList.setEnabled(scheduleListModel.getSize() > 0); // Enable schedule list if schedules exist
+                schedulePanel.revalidate();
+                schedulePanel.repaint();
+                if (scheduleListModel.getSize() > 0) {
+                    splitPane.setDividerLocation(0.7); // Ensure divider shows schedule panel
+                }
+                    } else {
+                        schedulePanel.setVisible(false);
+                        scheduleListModel.clear();
+                        schedulePanel.revalidate();
+                        schedulePanel.repaint();
                     }
+                } else {
+                    schedulePanel.setVisible(false);
+                    scheduleListModel.clear();
+                    schedulePanel.revalidate();
+                    schedulePanel.repaint();
                 }
             }
         });
@@ -632,19 +677,29 @@ public class StudentInterface extends JFrame {
                     }
                 }
 
-                // Get student's selected schedule for this subject
-                Schedule selectedSchedule = subject.getStudentSchedule(studentUser.getUsername());
-                String scheduleStr = selectedSchedule != null ? selectedSchedule.toString() : "No schedule selected";
-
-                studyLoadModel.addRow(new Object[]{
-                        subject.getId(),
-                        subject.getName(),
-                        subject.getUnits(),
-                        scheduleStr,
-                        facultyName
-                });
-
-                totalUnits += subject.getUnits();
+                // Get student's selected schedules for this subject
+                List<Schedule> selectedSchedules = subject.getStudentSchedules(studentUser.getUsername());
+                if (selectedSchedules.isEmpty()) {
+                    studyLoadModel.addRow(new Object[]{
+                            subject.getId(),
+                            subject.getName(),
+                            subject.getUnits(),
+                            "No schedule selected",
+                            facultyName
+                    });
+                    totalUnits += subject.getUnits();
+                } else {
+                    for (Schedule selectedSchedule : selectedSchedules) {
+                        studyLoadModel.addRow(new Object[]{
+                                subject.getId(),
+                                subject.getName(),
+                                subject.getUnits(),
+                                selectedSchedule.toString(),
+                                facultyName
+                        });
+                        totalUnits += subject.getUnits();
+                    }
+                }
             }
 
             totalUnitsLabel.setText("Total Units: " + totalUnits);
@@ -680,6 +735,7 @@ public class StudentInterface extends JFrame {
                 }
 
                 String subjectId = (String) studyLoadModel.getValueAt(selectedRow, 0);
+                String scheduleString = (String) studyLoadModel.getValueAt(selectedRow, 3);
                 Subject subject = dbManager.getSubject(subjectId);
 
                 if (subject == null) {
@@ -690,19 +746,35 @@ public class StudentInterface extends JFrame {
 
                 // Confirm unenrollment
                 int confirm = JOptionPane.showConfirmDialog(panel,
-                        "Are you sure you want to unenroll from " + subject.getName() + "?",
+                        "Are you sure you want to unenroll from the selected schedule of " + subject.getName() + "?",
                         "Confirm Unenrollment",
                         JOptionPane.YES_NO_OPTION);
 
                 if (confirm == JOptionPane.YES_OPTION) {
-                    // Unenroll student
-                    subject.unenrollStudent(studentUser.getUsername());
+                    // Unenroll only the selected schedule
+                    List<Schedule> studentSchedules = subject.getStudentSchedules(studentUser.getUsername());
+                    Schedule scheduleToRemove = null;
+                    int scheduleIndexToRemove = -1;
+                    for (int i = 0; i < studentSchedules.size(); i++) {
+                        Schedule schedule = studentSchedules.get(i);
+                        if (schedule.toString().equals(scheduleString)) {
+                            scheduleToRemove = schedule;
+                            scheduleIndexToRemove = subject.getSchedules().indexOf(schedule);
+                            break;
+                        }
+                    }
+                    if (scheduleToRemove != null && scheduleIndexToRemove != -1) {
+                        subject.unenrollStudentSchedule(studentUser.getUsername(), scheduleIndexToRemove);
+                    } else {
+                        // If no schedule matched, fallback to unenroll all (previous behavior)
+                        subject.unenrollStudent(studentUser.getUsername());
+                    }
 
                     // Refresh tables
                     refreshStudyLoad.run();
                     refreshTuition.run();
 
-                    JOptionPane.showMessageDialog(panel, "Successfully unenrolled from " + subject.getName(),
+                    JOptionPane.showMessageDialog(panel, "Successfully unenrolled from the selected schedule of " + subject.getName(),
                             "Success", JOptionPane.INFORMATION_MESSAGE);
                 }
             }
@@ -724,6 +796,7 @@ public class StudentInterface extends JFrame {
                 }
 
                 String subjectId = (String) studyLoadModel.getValueAt(selectedRow, 0);
+                String currentScheduleString = (String) studyLoadModel.getValueAt(selectedRow, 3);
                 Subject subject = dbManager.getSubject(subjectId);
 
                 if (subject == null) {
@@ -762,7 +835,7 @@ public class StudentInterface extends JFrame {
                     Schedule schedule = schedules.get(i);
                     boolean hasConflict = false;
                     String conflictInfo = "";
-                    
+
                     // Check for conflicts with other enrolled subjects
                     for (Subject other : otherEnrolledSubjects) {
                         Schedule otherSchedule = other.getStudentSchedule(studentUser.getUsername());
@@ -772,20 +845,21 @@ public class StudentInterface extends JFrame {
                             break;
                         }
                     }
-                    
-                    scheduleListModel.addElement("Schedule " + (i + 1) + ": " + schedule.toString() + 
-                                                (hasConflict ? conflictInfo : ""));
+
+                    scheduleListModel.addElement("Schedule " + (i + 1) + ": " + schedule.toString() +
+                            (hasConflict ? conflictInfo : ""));
                 }
 
                 // Highlight currently selected schedule
-                Schedule currentSchedule = subject.getStudentSchedule(studentUser.getUsername());
-                if (currentSchedule != null) {
-                    for (int i = 0; i < schedules.size(); i++) {
-                        if (schedules.get(i).equals(currentSchedule)) {
-                            scheduleList.setSelectedIndex(i);
-                            break;
-                        }
+                int currentScheduleIndex = -1;
+                for (int i = 0; i < schedules.size(); i++) {
+                    if (schedules.get(i).toString().equals(currentScheduleString)) {
+                        currentScheduleIndex = i;
+                        break;
                     }
+                }
+                if (currentScheduleIndex != -1) {
+                    scheduleList.setSelectedIndex(currentScheduleIndex);
                 }
 
                 JScrollPane scheduleScrollPane = new JScrollPane(scheduleList);
@@ -812,7 +886,7 @@ public class StudentInterface extends JFrame {
                     Schedule newSchedule = subject.getSchedules().get(scheduleIndex);
                     boolean hasConflict = false;
                     String conflictSubject = "";
-                    
+
                     // Check conflicts with other enrolled subjects
                     for (Subject other : otherEnrolledSubjects) {
                         Schedule otherSchedule = other.getStudentSchedule(studentUser.getUsername());
@@ -822,7 +896,7 @@ public class StudentInterface extends JFrame {
                             break;
                         }
                     }
-                    
+
                     if (hasConflict) {
                         JOptionPane.showMessageDialog(scheduleDialog,
                                 "Cannot select this schedule due to conflict with " + conflictSubject,
@@ -830,7 +904,21 @@ public class StudentInterface extends JFrame {
                         return;
                     }
 
-                    // Update the schedule selection
+                    // Replace the old schedule with the new one
+                    List<Schedule> studentSchedules = subject.getStudentSchedules(studentUser.getUsername());
+                    Schedule oldSchedule = null;
+                    for (Schedule schedule : studentSchedules) {
+                        if (schedule.toString().equals(currentScheduleString)) {
+                            oldSchedule = schedule;
+                            break;
+                        }
+                    }
+                    if (oldSchedule != null) {
+                        int oldScheduleIndex = subject.getSchedules().indexOf(oldSchedule);
+                        if (oldScheduleIndex != -1) {
+                            subject.unenrollStudentSchedule(studentUser.getUsername(), oldScheduleIndex);
+                        }
+                    }
                     subject.enrollStudent(studentUser.getUsername(), scheduleIndex);
 
                     // Refresh the study load view
@@ -944,14 +1032,19 @@ public class StudentInterface extends JFrame {
         if (department == null || department.isEmpty()) {
             subjects = dbManager.getAllSubjects();
         } else {
-            subjects = dbManager.getSubjectsByDepartment(department);
+            // Use case-insensitive filtering for department
+            String departmentLower = department.toLowerCase();
+            subjects = new ArrayList<>();
+            for (Subject subject : dbManager.getAllSubjects()) {
+                if (subject.getDepartment() != null && subject.getDepartment().toLowerCase().equals(departmentLower)) {
+                    subjects.add(subject);
+                }
+            }
         }
 
         for (Subject subject : subjects) {
-            // Skip subjects already enrolled in
-            if (subject.getEnrolledStudents().contains(studentUser.getUsername())) {
-                continue;
-            }
+            // Do not skip subjects already enrolled in, allow multiple schedule enrollments
+            // Instead, we will filter schedules in the schedule list
 
             // Format prerequisites
             StringBuilder prereqBuilder = new StringBuilder();
@@ -970,8 +1063,17 @@ public class StudentInterface extends JFrame {
                 }
             }
 
-            // Now we just show the count of available schedules, details shown when selected
-            String scheduleCount = subject.getSchedules().size() + " available";
+            // Count only schedules not yet enrolled by the student
+            int availableScheduleCount = 0;
+            List<Schedule> studentSchedules = subject.getStudentSchedules(studentUser.getUsername());
+            for (int i = 0; i < subject.getSchedules().size(); i++) {
+                Schedule schedule = subject.getSchedules().get(i);
+                if (!studentSchedules.contains(schedule)) {
+                    availableScheduleCount++;
+                }
+            }
+
+            String scheduleCount = availableScheduleCount + " available";
 
             model.addRow(new Object[]{
                     subject.getId(),

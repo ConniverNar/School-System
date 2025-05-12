@@ -191,6 +191,19 @@ public class Subject {
         this.assignedFaculty = assignedFaculty;
     }
 
+    public void unenrollStudentSchedule(String username, int scheduleIndex) {
+        List<Integer> scheduleIndices = studentScheduleChoices.get(username);
+        if (scheduleIndices != null) {
+            scheduleIndices.remove(Integer.valueOf(scheduleIndex));
+            if (scheduleIndices.isEmpty()) {
+                enrolledStudents.remove(username);
+                studentScheduleChoices.remove(username);
+            } else {
+                studentScheduleChoices.put(username, scheduleIndices);
+            }
+        }
+    }
+
     @Override
     public String toString() {
         return name + " (" + id + ")";
