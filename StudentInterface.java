@@ -661,49 +661,50 @@ public class StudentInterface extends JFrame {
         panel.add(summaryPanel, BorderLayout.SOUTH);
 
         // Method to refresh the study load table
-        refreshStudyLoad = () -> {
-            studyLoadModel.setRowCount(0);
+refreshStudyLoad = () -> {
+    studyLoadModel.setRowCount(0);
 
-            List<Subject> enrolledSubjects = dbManager.getEnrolledSubjects(studentUser.getUsername());
-            int totalUnits = 0;
+    List<Subject> enrolledSubjects = dbManager.getEnrolledSubjects(studentUser.getUsername());
+    int totalUnits = 0;
 
-            for (Subject subject : enrolledSubjects) {
-                // Get faculty name if assigned
-                String facultyName = "";
-                if (subject.getAssignedFaculty() != null && !subject.getAssignedFaculty().isEmpty()) {
-                    User faculty = dbManager.getUser(subject.getAssignedFaculty());
-                    if (faculty != null) {
-                        facultyName = faculty.getUserInfo("name");
-                    }
-                }
-
-                // Get student's selected schedules for this subject
-                List<Schedule> selectedSchedules = subject.getStudentSchedules(studentUser.getUsername());
-                if (selectedSchedules.isEmpty()) {
-                    studyLoadModel.addRow(new Object[]{
-                            subject.getId(),
-                            subject.getName(),
-                            subject.getUnits(),
-                            "No schedule selected",
-                            facultyName
-                    });
-                    totalUnits += subject.getUnits();
-                } else {
-                    for (Schedule selectedSchedule : selectedSchedules) {
-                        studyLoadModel.addRow(new Object[]{
-                                subject.getId(),
-                                subject.getName(),
-                                subject.getUnits(),
-                                selectedSchedule.toString(),
-                                facultyName
-                        });
-                        totalUnits += subject.getUnits();
-                    }
-                }
+    for (Subject subject : enrolledSubjects) {
+        // Get faculty name if assigned
+        String facultyName = "";
+        if (subject.getAssignedFaculty() != null && !subject.getAssignedFaculty().isEmpty()) {
+            User faculty = dbManager.getUser(subject.getAssignedFaculty());
+            if (faculty != null) {
+                facultyName = faculty.getUserInfo("name");
             }
+        }
 
-            totalUnitsLabel.setText("Total Units: " + totalUnits);
-        };
+        // Get student's selected schedules for this subject
+        List<Schedule> selectedSchedules = subject.getStudentSchedules(studentUser.getUsername());
+        if (selectedSchedules.isEmpty()) {
+            studyLoadModel.addRow(new Object[]{
+                    subject.getId(),
+                    subject.getName(),
+                    subject.getUnits(),
+                    "No schedule selected",
+                    facultyName
+            });
+            totalUnits += subject.getUnits();
+        } else {
+            for (Schedule selectedSchedule : selectedSchedules) {
+                studyLoadModel.addRow(new Object[]{
+                        subject.getId(),
+                        subject.getName(),
+                        subject.getUnits(),
+                        selectedSchedule.toString(),
+                        facultyName
+                });
+            }
+            // Add units only once per subject regardless of number of schedules
+            totalUnits += subject.getUnits();
+        }
+    }
+
+    totalUnitsLabel.setText("Total Units: " + totalUnits);
+};
 
         // Initial load of study load
         refreshStudyLoad.run();
