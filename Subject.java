@@ -14,7 +14,7 @@ public class Subject {
     private List<Schedule> schedules;
     private List<String> enrolledStudents;
     private String assignedFaculty;
-    private Map<String, Integer> studentScheduleChoices;
+    private Map<String, List<Integer>> studentScheduleChoices;
 
     public Subject(String id, String name, String department, double tuition, double salary, int units) {
         this.id = id;
@@ -99,7 +99,9 @@ public class Subject {
         if (!enrolledStudents.contains(username)) {
             enrolledStudents.add(username);
             if (!schedules.isEmpty()) {
-                studentScheduleChoices.put(username, 0); // Default to first schedule
+                List<Integer> scheduleIndices = new ArrayList<>();
+                scheduleIndices.add(0); // Default to first schedule
+                studentScheduleChoices.put(username, scheduleIndices);
             }
         }
     }
@@ -107,11 +109,20 @@ public class Subject {
     public void enrollStudent(String username, int scheduleIndex) {
         if (!enrolledStudents.contains(username) && scheduleIndex >= 0 && scheduleIndex < schedules.size()) {
             enrolledStudents.add(username);
-            studentScheduleChoices.put(username, scheduleIndex);
+            List<Integer> scheduleIndices = new ArrayList<>();
+            scheduleIndices.add(scheduleIndex);
+            studentScheduleChoices.put(username, scheduleIndices);
         } else if (enrolledStudents.contains(username)) {
-            // Update schedule choice if already enrolled
+            // Add schedule choice if not already present
             if (scheduleIndex >= 0 && scheduleIndex < schedules.size()) {
-                studentScheduleChoices.put(username, scheduleIndex);
+                List<Integer> scheduleIndices = studentScheduleChoices.get(username);
+                if (scheduleIndices == null) {
+                    scheduleIndices = new ArrayList<>();
+                }
+                if (!scheduleIndices.contains(scheduleIndex)) {
+                    scheduleIndices.add(scheduleIndex);
+                    studentScheduleChoices.put(username, scheduleIndices);
+                }
             }
         }
     }
@@ -121,22 +132,26 @@ public class Subject {
         studentScheduleChoices.remove(username);
     }
     
-    public String getAssignedFaculty() {
-        return assignedFaculty;
-    }
-    
-    public void setAssignedFaculty(String assignedFaculty) {
-        this.assignedFaculty = assignedFaculty;
-    }
-    
-    public void removeAssignedFaculty() {
-        this.assignedFaculty = "";
+    public List<Schedule> getStudentSchedules(String username) {
+        List<Schedule> result = new ArrayList<>();
+        List<Integer> scheduleIndices = studentScheduleChoices.get(username);
+        if (scheduleIndices != null) {
+            for (Integer index : scheduleIndices) {
+                if (index >= 0 && index < schedules.size()) {
+                    result.add(schedules.get(index));
+                }
+            }
+        }
+        return result;
     }
     
     public Schedule getStudentSchedule(String username) {
-        Integer scheduleIndex = studentScheduleChoices.get(username);
-        if (scheduleIndex != null && scheduleIndex >= 0 && scheduleIndex < schedules.size()) {
-            return schedules.get(scheduleIndex);
+        List<Integer> scheduleIndices = studentScheduleChoices.get(username);
+        if (scheduleIndices != null && !scheduleIndices.isEmpty()) {
+            Integer scheduleIndex = scheduleIndices.get(0);
+            if (scheduleIndex >= 0 && scheduleIndex < schedules.size()) {
+                return schedules.get(scheduleIndex);
+            }
         }
         return null;
     }
@@ -157,15 +172,25 @@ public class Subject {
                 continue;
             }
             
-            Schedule enrolledSchedule = enrolledSubject.getStudentSchedule(username);
-            if (enrolledSchedule != null && enrolledSchedule.conflictsWith(scheduleToCheck)) {
-                return false;
+            List<Schedule> enrolledSchedules = enrolledSubject.getStudentSchedules(username);
+            for (Schedule enrolledSchedule : enrolledSchedules) {
+                if (enrolledSchedule != null && enrolledSchedule.conflictsWith(scheduleToCheck)) {
+                    return false;
+                }
             }
         }
         
         return true;
     }
     
+    public String getAssignedFaculty() {
+        return assignedFaculty;
+    }
+    
+    public void setAssignedFaculty(String assignedFaculty) {
+        this.assignedFaculty = assignedFaculty;
+    }
+
     @Override
     public String toString() {
         return name + " (" + id + ")";

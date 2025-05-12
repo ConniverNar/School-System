@@ -1424,9 +1424,14 @@ updateButton.addActionListener(new ActionListener() {
                                 Schedule selectedSchedule = schedules.get(selectedIndex);
                                 boolean conflictDetected = false;
                                 for (Subject enrolledSubject : enrolledSubjects) {
-                                    Schedule studentSchedule = enrolledSubject.getStudentSchedule(studentUsername);
-                                    if (studentSchedule != null && AdminInterface.this.schedulesConflict(selectedSchedule, studentSchedule)) {
-                                        conflictDetected = true;
+                                    List<Schedule> studentSchedules = enrolledSubject.getStudentSchedules(studentUsername);
+                                    for (Schedule studentSchedule : studentSchedules) {
+                                        if (studentSchedule != null && AdminInterface.this.schedulesConflict(selectedSchedule, studentSchedule)) {
+                                            conflictDetected = true;
+                                            break;
+                                        }
+                                    }
+                                    if (conflictDetected) {
                                         break;
                                     }
                                 }
@@ -1454,31 +1459,33 @@ updateButton.addActionListener(new ActionListener() {
                     scheduleDialog.setVisible(true);
                     
 if (enrolled[0]) {
-    // Refresh enrolled students list with schedule info showing only schedules the student is enrolled in
+    // Refresh enrolled students list with schedule info showing all schedules the student is enrolled in
     enrolledListModel.clear();
     for (String student : subject.getEnrolledStudents()) {
         User studentUser = dbManager.getUser(student);
         if (studentUser != null) {
-            // Collect all schedules the student is enrolled in
-            List<Schedule> studentSchedules = new java.util.ArrayList<>();
-            for (Schedule schedule : subject.getSchedules()) {
-                // Assuming subject has a method to check if student is enrolled in a schedule
-                // Since we don't have that method, we assume enrollStudent(studentUsername, scheduleIndex) enrolls student in schedule at scheduleIndex
-                // So we check if the student is enrolled in this schedule by checking if the schedule index is in student's enrolled schedules
-                // But since we don't have direct access, we assume subject.getStudentSchedule(student) returns one schedule, so we collect all schedules
-                // Here, we add all schedules for simplicity, or we can filter if needed
-                // For now, add all schedules (may be improved if Subject class has method to check enrollment per schedule)
-                studentSchedules.add(schedule);
-            }
+            List<Schedule> studentSchedules = subject.getStudentSchedules(student);
             StringBuilder scheduleInfoBuilder = new StringBuilder();
-            for (Schedule schedule : studentSchedules) {
-                if (scheduleInfoBuilder.length() > 0) {
-                    scheduleInfoBuilder.append(", ");
+            if (!studentSchedules.isEmpty()) {
+                scheduleInfoBuilder.append(" (");
+                for (int i = 0; i < studentSchedules.size(); i++) {
+                    scheduleInfoBuilder.append(studentSchedules.get(i).toString());
+                    if (i < studentSchedules.size() - 1) {
+                        scheduleInfoBuilder.append(", ");
+                    }
                 }
-                scheduleInfoBuilder.append(schedule.toString());
+                scheduleInfoBuilder.append(")");
             }
-            String scheduleInfo = (scheduleInfoBuilder.length() > 0) ? " (" + scheduleInfoBuilder.toString() + ")" : "";
-            enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name") + scheduleInfo);
+            enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name") + scheduleInfoBuilder.toString());
+        }
+    }
+    
+    // Refresh student combo box to remove newly enrolled student
+    studentComboModel.removeAllElements();
+    List<User> allStudents = dbManager.getUsersByType(User.UserType.STUDENT);
+    for (User student : allStudents) {
+        if (!subject.getEnrolledStudents().contains(student.getUsername())) {
+            studentComboModel.addElement(student.getUsername() + " - " + student.getUserInfo("name"));
         }
     }
     
@@ -1732,20 +1739,8 @@ refreshEnrolledButton.addActionListener(new ActionListener() {
             for (String student : subject.getEnrolledStudents()) {
                 User studentUser = dbManager.getUser(student);
                 if (studentUser != null) {
-                    // Collect all schedules the student is enrolled in
-                    List<Schedule> studentSchedules = new java.util.ArrayList<>();
-                    for (Schedule schedule : subject.getSchedules()) {
-                        // Same assumption as above, add all schedules for now
-                        studentSchedules.add(schedule);
-                    }
-                    StringBuilder scheduleInfoBuilder = new StringBuilder();
-                    for (Schedule schedule : studentSchedules) {
-                        if (scheduleInfoBuilder.length() > 0) {
-                            scheduleInfoBuilder.append(", ");
-                        }
-                        scheduleInfoBuilder.append(schedule.toString());
-                    }
-                    String scheduleInfo = (scheduleInfoBuilder.length() > 0) ? " (" + scheduleInfoBuilder.toString() + ")" : "";
+                    Schedule studentSchedule = subject.getStudentSchedule(student);
+                    String scheduleInfo = (studentSchedule != null) ? " (" + studentSchedule.toString() + ")" : "";
                     enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name") + scheduleInfo);
                 }
             }
