@@ -2160,6 +2160,7 @@ refreshEnrolledButton.addActionListener(new ActionListener() {
                 List<Schedule> schedules = subject.getSchedules();
                 StringBuilder assignedSchedulesInfo = new StringBuilder();
                 boolean hasAssignedSchedule = false;
+                double subjectSalaryTotal = 0.0;
                 
                 for (int i = 0; i < schedules.size(); i++) {
                     String assignedFaculty = dbManager.getScheduleAssignment(subject.getId(), i);
@@ -2174,6 +2175,8 @@ refreshEnrolledButton.addActionListener(new ActionListener() {
                                              .append("-")
                                              .append(schedule.getEndTime());
                         hasAssignedSchedule = true;
+                        // Add salary per schedule (unit)
+                        subjectSalaryTotal += subject.getSalary() / schedules.size();
                     }
                 }
                 
@@ -2182,9 +2185,9 @@ refreshEnrolledButton.addActionListener(new ActionListener() {
                         subject.getId(),
                         subject.getName(),
                         assignedSchedulesInfo.toString(),
-                        String.format("₱%.2f", subject.getSalary())
+                        String.format("₱%.2f", subjectSalaryTotal)
                     });
-                    totalSubjectsSalary += subject.getSalary();
+                    totalSubjectsSalary += subjectSalaryTotal;
                 }
             }
             
