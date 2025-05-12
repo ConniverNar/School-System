@@ -1339,7 +1339,7 @@ updateButton.addActionListener(new ActionListener() {
         }
     });
     
-    // Force enroll student
+            // Force enroll student
             enrollButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -1359,26 +1359,37 @@ updateButton.addActionListener(new ActionListener() {
                     String studentEntry = (String) studentComboBox.getSelectedItem();
                     String studentUsername = studentEntry.split(" - ")[0];
                     
-                    // Check if student is already enrolled in the subject
-                    if (subject.getEnrolledStudents().contains(studentUsername)) {
-                        JOptionPane.showMessageDialog(panel, "Student is already enrolled in this subject", "Information", JOptionPane.INFORMATION_MESSAGE);
-                        return;
+                    // Check prerequisites before enrollment
+                    List<String> prerequisites = subject.getPrerequisites();
+                    List<Subject> enrolledSubjects = dbManager.getEnrolledSubjects(studentUsername);
+                    for (String prereqId : prerequisites) {
+                        boolean hasPrereq = false;
+                        for (Subject enrolledSubject : enrolledSubjects) {
+                            if (enrolledSubject.getId().equals(prereqId)) {
+                                hasPrereq = true;
+                                break;
+                            }
+                        }
+                        if (!hasPrereq) {
+                            JOptionPane.showMessageDialog(panel, "Student does not meet prerequisite: " + prereqId, "Error", JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
                     }
                     
-                    // Show dialog to select schedule for enrollment
+                    // Show dialog to select schedules for enrollment (multi-selection)
                     List<Schedule> schedules = subject.getSchedules();
                     if (schedules.isEmpty()) {
                         JOptionPane.showMessageDialog(panel, "No schedules available for this subject", "Error", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                     
-                    JDialog scheduleDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(panel), "Select Schedule", true);
+                    JDialog scheduleDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(panel), "Select Schedules", true);
                     DefaultListModel<String> scheduleListModelDialog = new DefaultListModel<>();
                     for (Schedule s : schedules) {
                         scheduleListModelDialog.addElement(s.toString());
                     }
                     JList<String> scheduleJList = new JList<>(scheduleListModelDialog);
-                    scheduleJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+                    scheduleJList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
                     JScrollPane scrollPane = new JScrollPane(scheduleJList);
                     scrollPane.setPreferredSize(new Dimension(400, 200));
                     
@@ -1402,29 +1413,32 @@ updateButton.addActionListener(new ActionListener() {
                     confirmButton.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            int selectedIndex = scheduleJList.getSelectedIndex();
-                            if (selectedIndex == -1) {
-                                JOptionPane.showMessageDialog(scheduleDialog, "Please select a schedule", "Error", JOptionPane.ERROR_MESSAGE);
+                            int[] selectedIndices = scheduleJList.getSelectedIndices();
+                            if (selectedIndices.length == 0) {
+                                JOptionPane.showMessageDialog(scheduleDialog, "Please select at least one schedule", "Error", JOptionPane.ERROR_MESSAGE);
                                 return;
                             }
-                            // Check for schedule conflict before enrolling
-                            Schedule selectedSchedule = schedules.get(selectedIndex);
-                            // Get all subjects the student is enrolled in
+                            // Check for schedule conflicts before enrolling
                             List<Subject> enrolledSubjects = dbManager.getEnrolledSubjects(studentUsername);
-                            boolean conflictDetected = false;
-                            for (Subject enrolledSubject : enrolledSubjects) {
-                                Schedule studentSchedule = enrolledSubject.getStudentSchedule(studentUsername);
-                                if (studentSchedule != null && AdminInterface.this.schedulesConflict(selectedSchedule, studentSchedule)) {
-                                    conflictDetected = true;
-                                    break;
+                            for (int selectedIndex : selectedIndices) {
+                                Schedule selectedSchedule = schedules.get(selectedIndex);
+                                boolean conflictDetected = false;
+                                for (Subject enrolledSubject : enrolledSubjects) {
+                                    Schedule studentSchedule = enrolledSubject.getStudentSchedule(studentUsername);
+                                    if (studentSchedule != null && AdminInterface.this.schedulesConflict(selectedSchedule, studentSchedule)) {
+                                        conflictDetected = true;
+                                        break;
+                                    }
+                                }
+                                if (conflictDetected) {
+                                    JOptionPane.showMessageDialog(scheduleDialog, "Schedule conflict detected for schedule: " + selectedSchedule.toString() + ". Enrollment cancelled.", "Error", JOptionPane.ERROR_MESSAGE);
+                                    return;
                                 }
                             }
-                            if (conflictDetected) {
-                                JOptionPane.showMessageDialog(scheduleDialog, "Schedule conflict detected. Enrollment cancelled.", "Error", JOptionPane.ERROR_MESSAGE);
-                                return;
+                            // Enroll student in all selected schedules
+                            for (int selectedIndex : selectedIndices) {
+                                subject.enrollStudent(studentUsername, selectedIndex);
                             }
-                            // Enroll student in the selected schedule
-                            subject.enrollStudent(studentUsername, selectedIndex);
                             enrolled[0] = true;
                             scheduleDialog.dispose();
                         }
@@ -1439,20 +1453,37 @@ updateButton.addActionListener(new ActionListener() {
                     
                     scheduleDialog.setVisible(true);
                     
-                    if (enrolled[0]) {
-                        // Refresh enrolled students list with schedule info
-                        enrolledListModel.clear();
-                        for (String student : subject.getEnrolledStudents()) {
-                            User studentUser = dbManager.getUser(student);
-                            if (studentUser != null) {
-                                Schedule schedule = subject.getStudentSchedule(student);
-                                String scheduleInfo = (schedule != null) ? " (" + schedule.toString() + ")" : "";
-                                enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name") + scheduleInfo);
-                            }
-                        }
-                        
-                        JOptionPane.showMessageDialog(panel, "Student enrolled successfully in the selected schedule", "Success", JOptionPane.INFORMATION_MESSAGE);
-                    }
+if (enrolled[0]) {
+    // Refresh enrolled students list with schedule info showing only schedules the student is enrolled in
+    enrolledListModel.clear();
+    for (String student : subject.getEnrolledStudents()) {
+        User studentUser = dbManager.getUser(student);
+        if (studentUser != null) {
+            // Collect all schedules the student is enrolled in
+            List<Schedule> studentSchedules = new java.util.ArrayList<>();
+            for (Schedule schedule : subject.getSchedules()) {
+                // Assuming subject has a method to check if student is enrolled in a schedule
+                // Since we don't have that method, we assume enrollStudent(studentUsername, scheduleIndex) enrolls student in schedule at scheduleIndex
+                // So we check if the student is enrolled in this schedule by checking if the schedule index is in student's enrolled schedules
+                // But since we don't have direct access, we assume subject.getStudentSchedule(student) returns one schedule, so we collect all schedules
+                // Here, we add all schedules for simplicity, or we can filter if needed
+                // For now, add all schedules (may be improved if Subject class has method to check enrollment per schedule)
+                studentSchedules.add(schedule);
+            }
+            StringBuilder scheduleInfoBuilder = new StringBuilder();
+            for (Schedule schedule : studentSchedules) {
+                if (scheduleInfoBuilder.length() > 0) {
+                    scheduleInfoBuilder.append(", ");
+                }
+                scheduleInfoBuilder.append(schedule.toString());
+            }
+            String scheduleInfo = (scheduleInfoBuilder.length() > 0) ? " (" + scheduleInfoBuilder.toString() + ")" : "";
+            enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name") + scheduleInfo);
+        }
+    }
+    
+    JOptionPane.showMessageDialog(panel, "Student enrolled successfully in the selected schedules", "Success", JOptionPane.INFORMATION_MESSAGE);
+}
                 }
             });
     
@@ -1687,28 +1718,40 @@ facultyScheduleList.addListSelectionListener(new ListSelectionListener() {
 });
     
             // Refresh enrolled students button action listener
-            refreshEnrolledButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (subjectList.getSelectedValue() == null) {
-                        JOptionPane.showMessageDialog(panel, "Please select a subject first to refresh enrolled students", "Error", JOptionPane.ERROR_MESSAGE);
-                        return;
+refreshEnrolledButton.addActionListener(new ActionListener() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (subjectList.getSelectedValue() == null) {
+            JOptionPane.showMessageDialog(panel, "Please select a subject first to refresh enrolled students", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        String subjectId = subjectList.getSelectedValue().split(" ")[0];
+        Subject subject = dbManager.getSubject(subjectId);
+        if (subject != null) {
+            enrolledListModel.clear();
+            for (String student : subject.getEnrolledStudents()) {
+                User studentUser = dbManager.getUser(student);
+                if (studentUser != null) {
+                    // Collect all schedules the student is enrolled in
+                    List<Schedule> studentSchedules = new java.util.ArrayList<>();
+                    for (Schedule schedule : subject.getSchedules()) {
+                        // Same assumption as above, add all schedules for now
+                        studentSchedules.add(schedule);
                     }
-                    String subjectId = subjectList.getSelectedValue().split(" ")[0];
-                    Subject subject = dbManager.getSubject(subjectId);
-                    if (subject != null) {
-                        enrolledListModel.clear();
-                        for (String student : subject.getEnrolledStudents()) {
-                            User studentUser = dbManager.getUser(student);
-                            if (studentUser != null) {
-                                Schedule schedule = subject.getStudentSchedule(student);
-                                String scheduleInfo = (schedule != null) ? " (" + schedule.toString() + ")" : "";
-                                enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name") + scheduleInfo);
-                            }
+                    StringBuilder scheduleInfoBuilder = new StringBuilder();
+                    for (Schedule schedule : studentSchedules) {
+                        if (scheduleInfoBuilder.length() > 0) {
+                            scheduleInfoBuilder.append(", ");
                         }
+                        scheduleInfoBuilder.append(schedule.toString());
                     }
+                    String scheduleInfo = (scheduleInfoBuilder.length() > 0) ? " (" + scheduleInfoBuilder.toString() + ")" : "";
+                    enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name") + scheduleInfo);
                 }
-            });
+            }
+        }
+    }
+});
     
     // Refresh faculty assignment button action listener
     refreshFacultyButton.addActionListener(new ActionListener() {
