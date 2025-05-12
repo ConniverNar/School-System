@@ -83,7 +83,7 @@ public class AdminInterface extends JFrame {
         this.adminUser = adminUser;
         
         setTitle("Admin Interface - " + adminUser.getUserInfo("name"));
-        setSize(1300, 700);
+        setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
@@ -1138,9 +1138,19 @@ subjectList.addListSelectionListener(new ListSelectionListener() {
                     for (String student : subject.getEnrolledStudents()) {
                         User studentUser = dbManager.getUser(student);
                         if (studentUser != null) {
-                            Schedule schedule = subject.getStudentSchedule(student);
-                            String scheduleInfo = (schedule != null) ? " (" + schedule.toString() + ")" : "";
-                            enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name") + scheduleInfo);
+                            List<Schedule> studentSchedules = subject.getStudentSchedules(student);
+                            StringBuilder scheduleInfoBuilder = new StringBuilder();
+                            if (!studentSchedules.isEmpty()) {
+                                scheduleInfoBuilder.append(" (");
+                                for (int i = 0; i < studentSchedules.size(); i++) {
+                                    scheduleInfoBuilder.append(studentSchedules.get(i).toString());
+                                    if (i < studentSchedules.size() - 1) {
+                                        scheduleInfoBuilder.append(", ");
+                                    }
+                                }
+                                scheduleInfoBuilder.append(")");
+                            }
+                            enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name") + scheduleInfoBuilder.toString());
                         }
                     }
                     
@@ -1520,7 +1530,19 @@ updateButton.addActionListener(new ActionListener() {
             for (String student : subject.getEnrolledStudents()) {
                 User studentUser = dbManager.getUser(student);
                 if (studentUser != null) {
-                    enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name"));
+                    List<Schedule> studentSchedules = subject.getStudentSchedules(student);
+                    StringBuilder scheduleInfoBuilder = new StringBuilder();
+                    if (!studentSchedules.isEmpty()) {
+                        scheduleInfoBuilder.append(" (");
+                        for (int i = 0; i < studentSchedules.size(); i++) {
+                            scheduleInfoBuilder.append(studentSchedules.get(i).toString());
+                            if (i < studentSchedules.size() - 1) {
+                                scheduleInfoBuilder.append(", ");
+                            }
+                        }
+                        scheduleInfoBuilder.append(")");
+                    }
+                    enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name") + scheduleInfoBuilder.toString());
                 }
             }
             
@@ -1722,7 +1744,7 @@ facultyScheduleList.addListSelectionListener(new ListSelectionListener() {
     }
 });
     
-            // Refresh enrolled students button action listener
+    // Refresh enrolled students button action listener
 refreshEnrolledButton.addActionListener(new ActionListener() {
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -1737,9 +1759,19 @@ refreshEnrolledButton.addActionListener(new ActionListener() {
             for (String student : subject.getEnrolledStudents()) {
                 User studentUser = dbManager.getUser(student);
                 if (studentUser != null) {
-                    Schedule studentSchedule = subject.getStudentSchedule(student);
-                    String scheduleInfo = (studentSchedule != null) ? " (" + studentSchedule.toString() + ")" : "";
-                    enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name") + scheduleInfo);
+                    List<Schedule> studentSchedules = subject.getStudentSchedules(student);
+                    StringBuilder scheduleInfoBuilder = new StringBuilder();
+                    if (!studentSchedules.isEmpty()) {
+                        scheduleInfoBuilder.append(" (");
+                        for (int i = 0; i < studentSchedules.size(); i++) {
+                            scheduleInfoBuilder.append(studentSchedules.get(i).toString());
+                            if (i < studentSchedules.size() - 1) {
+                                scheduleInfoBuilder.append(", ");
+                            }
+                        }
+                        scheduleInfoBuilder.append(")");
+                    }
+                    enrolledListModel.addElement(student + " - " + studentUser.getUserInfo("name") + scheduleInfoBuilder.toString());
                 }
             }
         }
