@@ -12,7 +12,7 @@ public class LoginPage extends JFrame {
         
         // Setup frame
         setTitle("School Management System - Login");
-        setSize(400, 300);
+        setSize(360, 340);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
