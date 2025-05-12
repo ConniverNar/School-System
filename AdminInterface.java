@@ -83,7 +83,7 @@ public class AdminInterface extends JFrame {
         this.adminUser = adminUser;
         
         setTitle("Admin Interface - " + adminUser.getUserInfo("name"));
-        setSize(800, 600);
+        setSize(1300, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
