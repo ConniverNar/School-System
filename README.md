@@ -7,10 +7,12 @@ Student
 - View study load and enrolled courses
 - View tuition details
 - Select and enroll a course
+
 Faculty
 - View salary details
 - View teaching load and assigned subjects
 - Select a course to instruct.
+
 Administrators
 - Add, remove, and manage students
 - Add, remove, and manage teachers
