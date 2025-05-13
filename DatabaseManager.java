@@ -52,11 +52,18 @@ public class DatabaseManager {
         faculty1.setUserInfo("gender", "Male");
         faculty1.setUserInfo("department", "Computer Engineering");
 
+        User faculty2 = new User("Stephen", "123", User.UserType.FACULTY);
+        faculty2.setUserInfo("name", "Stephen Adobo");
+        faculty2.setUserInfo("age", "35");
+        faculty2.setUserInfo("gender", "Male");
+        faculty2.setUserInfo("department", "Computer Engineering");
+
         users.put(admin.getUsername(), admin);
         users.put(student1.getUsername(), student1);
         users.put(student2.getUsername(), student2);
         users.put(student3.getUsername(), student3);
         users.put(faculty1.getUsername(), faculty1);
+        users.put(faculty2.getUsername(), faculty2);
 
         // Preload subject CpE-1101 Basic Coding
         Subject subject1 = new Subject("CpE-1101", "Basic Coding", "Computer Engineering", 2000, 2000, 2);
