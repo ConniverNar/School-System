@@ -337,7 +337,7 @@ public class AdminInterface extends JFrame {
         }
     });
         
-        updateButton.addActionListener(new ActionListener() {
+updateButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
             String selectedUsername = studentList.getSelectedValue();
@@ -350,6 +350,11 @@ public class AdminInterface extends JFrame {
         String newUsername = usernameField.getText().trim();
         String age = ageField.getText().trim();
         String schoolYear = schoolYearField.getText().trim();
+
+        if (newUsername.isEmpty()) {
+            JOptionPane.showMessageDialog(panel, "Username cannot be empty", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         
         if (!selectedUsername.equals(newUsername) && dbManager.getUser(newUsername) != null) {
             JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
@@ -639,6 +644,11 @@ updateButton.addActionListener(new ActionListener() {
         User faculty = dbManager.getUser(selectedUsername);
         String newUsername = usernameField.getText().trim();
         String age = ageField.getText().trim();
+
+        if (newUsername.isEmpty()) {
+            JOptionPane.showMessageDialog(panel, "Username cannot be empty", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
     
         if (!selectedUsername.equals(newUsername) && dbManager.getUser(newUsername) != null) {
             JOptionPane.showMessageDialog(panel, "Username already exists", "Error", JOptionPane.ERROR_MESSAGE);
